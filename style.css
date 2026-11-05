@@ -12,6 +12,10 @@
   --panel-gap: 12px;
   /* The width the floating panel takes from the stage. */
   --panel-space: calc(var(--panel-w) + var(--panel-gap) * 2);
+  /* The settings sliding in and out; playground.js glides the surfaces
+     with the same timing. */
+  --ui-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --ui-time: 420ms;
   --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Helvetica Neue', 'PingFang SC', sans-serif;
   color-scheme: dark;
 }
@@ -482,7 +486,25 @@ body[data-ui="off"] { --panel-space: 0px; }
 
 .sidebar::-webkit-scrollbar { display: none; }
 
-body[data-ui="off"] .sidebar { display: none; }
+/* Hidden, it slides out past the window's edge. */
+body[data-ui="off"] .sidebar {
+  translate: calc(100% + var(--panel-gap)) 0;
+  opacity: 0;
+  visibility: hidden;
+}
+
+body[data-ui-motion] .sidebar {
+  transition: translate var(--ui-time) var(--ui-ease), opacity 240ms ease, visibility 0s;
+}
+
+body[data-ui-motion][data-ui="off"] .sidebar {
+  transition: translate var(--ui-time) var(--ui-ease), opacity 240ms ease 120ms, visibility 0s var(--ui-time);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-ui-motion] .sidebar,
+  body[data-ui-motion][data-ui="off"] .sidebar { transition: none; }
+}
 
 /* Until Tweakpane has loaded from the CDN. */
 .sidebar-loading {
@@ -576,7 +598,8 @@ body[data-ui="off"] .sidebar { display: none; }
 @media (max-width: 720px) {
   :root {
     --panel-space: 0px;
-    --sheet-h: min(52dvh, 480px);
+    --sheet-full: min(52dvh, 480px);
+    --sheet-h: var(--sheet-full);
   }
 
   body[data-ui="off"] { --sheet-h: 0px; }
@@ -592,7 +615,9 @@ body[data-ui="off"] .sidebar { display: none; }
     bottom: 0;
     left: 0;
     width: auto;
-    height: var(--sheet-h);
+    /* Its full height even while hidden, so it slides rather than
+       squashes. */
+    height: var(--sheet-full);
     max-height: none;
     box-sizing: border-box;
     padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
@@ -601,6 +626,8 @@ body[data-ui="off"] .sidebar { display: none; }
     background: #111215;
     box-shadow: none;
   }
+
+  body[data-ui="off"] .sidebar { translate: 0 100%; }
 
   .surfaces { padding-bottom: 72px; }
   body[data-ui="off"] .surfaces { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }

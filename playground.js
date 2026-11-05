@@ -799,7 +799,10 @@ function refractionSurfaces() {
     const box = el.getBoundingClientRect();
     const m = materials[el.dataset.kind === 'dark' ? 'dark' : 'light'];
     const veil = Math.min(1, m.opacity);
-    const radius = Number.parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0;
+    // The box is as drawn, a glide's transform included; the radius is
+    // scaled to match.
+    const drawn = el.offsetWidth ? box.width / el.offsetWidth : 1;
+    const radius = (Number.parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0) * drawn;
     return {
       x: box.left - stageBox.left,
       y: box.top - stageBox.top,
@@ -1026,8 +1029,40 @@ tintRange.addEventListener('input', () => {
   refreshPanel();
 });
 
+// The panel opening or closing changes the room the surfaces have and so
+// their size. The layout switches at once, and each surface glides from
+// where it was by a transform: that leaves its box alone, so its lens is
+// fitted once instead of on every frame of the move.
+let glides = [];
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+
 const togglePanel = () => {
+  const before = glasses.map((el) => el.getBoundingClientRect());
+  glides.forEach((glide) => glide.cancel());
+  glides = [];
+  // Lets the panel slide, from the first toggle on (see style.css).
+  document.body.dataset.uiMotion = '';
   document.body.dataset.ui = document.body.dataset.ui === 'off' ? 'on' : 'off';
+  refraction?.wake();
+  if (reduceMotion.matches) return;
+  const root = getComputedStyle(document.documentElement);
+  const timing = {
+    duration: Number.parseFloat(root.getPropertyValue('--ui-time')) || 420,
+    easing: root.getPropertyValue('--ui-ease').trim() || 'ease',
+  };
+  glasses.forEach((el, index) => {
+    const from = before[index];
+    const to = el.getBoundingClientRect();
+    if (!from.width || !to.width) return;
+    const dx = from.left - to.left;
+    const dy = from.top - to.top;
+    const scale = from.width / to.width;
+    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5 && Math.abs(scale - 1) < 0.001) return;
+    glides.push(el.animate([
+      { transformOrigin: '0 0', transform: `translate(${dx}px, ${dy}px) scale(${scale})` },
+      { transformOrigin: '0 0', transform: 'none' },
+    ], timing));
+  });
 };
 
 const actions = {
