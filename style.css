@@ -239,8 +239,15 @@ body[data-ui="off"] { --panel-space: 0px; }
   margin-top: calc(10 * var(--u));
 }
 
-.p-side svg { width: calc(26 * var(--u)); height: calc(26 * var(--u)); }
-.p-main svg { width: calc(36 * var(--u)); height: calc(36 * var(--u)); }
+/* Drawn to the proportions of SF Symbols' backward.fill, pause.fill,
+   play.fill and forward.fill. A round-joined stroke rounds the triangles;
+   its width keeps the corner radius near 9% of each glyph's height, like
+   the rx on the pause bars. */
+.p-side svg { width: calc(28 * var(--u)); height: calc(28 * var(--u)); }
+.p-main svg { width: calc(44 * var(--u)); height: calc(44 * var(--u)); }
+.p-controls .solid { fill: currentColor; }
+.p-side .solid { stroke-width: 2.6; }
+.p-main .solid { stroke-width: 3.8; }
 .p-controls button { border-radius: 50%; padding: calc(4 * var(--u)); }
 .p-main .is-play { display: none; }
 .stage[data-paused] .p-main .is-play { display: block; }
