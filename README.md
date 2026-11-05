@@ -52,7 +52,21 @@ Refraction: a 40–44px rim, an edge offset of 1.1× the rim, falloff 2.6, color
 
 ## Use it in your own product
 
-The quickest way is to hand this prompt to an AI coding tool like Claude Code or Cursor. It changes the material of your existing components and leaves the layout alone. It's the one from the original post.
+The quickest way is to hand a prompt to an AI coding tool. Both prompts below change the material of your existing components and leave the layout alone.
+
+### Install prompt
+
+Paste this into Claude Code, Cursor or another coding agent:
+
+```text
+Read https://raw.githubusercontent.com/kubai087/glasswork/main/INSTALL.md and follow it to add Glasswork's liquid glass to my project.
+```
+
+The agent uses this repository's code, including the fixes for Safari and iOS. The steps are in [INSTALL.md](INSTALL.md).
+
+### The original prompt
+
+This one, from the original post, has the tool build the same material from scratch.
 
 <details>
 <summary><b>Show the prompt</b></summary>
@@ -128,7 +142,7 @@ The refraction needs one small script with no dependencies:
 
 ```html
 <script type="module">
-  import { liquidGlass } from 'https://cdn.jsdelivr.net/gh/kubai087/glasswork@v1.0.0/lens.js';
+  import { liquidGlass } from 'https://cdn.jsdelivr.net/gh/kubai087/glasswork@v1.1.0/lens.js';
   for (const el of document.querySelectorAll('.glass')) {
     liquidGlass(el, { rim: 40, edge: 1.1, power: 2.6, dispersion: 0.15 });
   }

@@ -4,9 +4,11 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.0] - 2026-11-05
 
 ### Added
+
+- **INSTALL.md** and a one-line install prompt in the README: paste it into a coding agent and it adds this repository's glass to a project.
 
 - **More backgrounds.** macOS's abstract wallpapers from Sonoma back to Big Sur beside Tahoe's, each with a light and a dark version that follow the theme (Sonoma's moves), a random photo from Lorem Picsum (Unsplash) with **Another photo**, and pasted links to an image or video; who made each shows in the stage's corner.
 - **Your own file, more ways.** Upload an image or video, drop it on the page or paste it.
@@ -39,4 +41,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Phone layout.** The settings open as a sheet below the stage from the toolbar.
 - **Chinese panel and README** (`?lang=zh`, `README.zh-CN.md`).
 
+[1.1.0]: https://github.com/kubai087/glasswork/releases/tag/v1.1.0
 [1.0.0]: https://github.com/kubai087/glasswork/releases/tag/v1.0.0

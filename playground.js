@@ -1170,7 +1170,7 @@ function exportCss() {
   const options = `{ rim: ${n(state.rim, 1)}, edge: ${n(state.edge, 2)}, power: ${n(state.power, 2)}, dispersion: ${n(state.dispersion, 3)} }`;
   return `${css}\n\n<!-- The rim lens (Chromium); everywhere else the CSS glass stays as it is. -->
 <script type="module">
-  import { liquidGlass } from 'https://cdn.jsdelivr.net/gh/kubai087/glasswork@main/lens.js';
+  import { liquidGlass } from 'https://cdn.jsdelivr.net/gh/kubai087/glasswork@v1.1.0/lens.js';
   for (const el of document.querySelectorAll('.glass')) liquidGlass(el, ${options});
 </script>`;
 }

@@ -52,7 +52,21 @@
 
 ## 用到自己的产品里
 
-最简单的方法是把下面这段 Prompt 交给 Claude Code、Cursor 这类 AI 编程工具，它会在你现有的组件上替换材质，不改动布局。这段是帖子里附的原文，为英文。
+最简单的方法是把 Prompt 交给 AI 编程工具。下面两段都只替换现有组件的材质，不改动布局。
+
+### 安装提示词
+
+把下面这句粘贴到 Claude Code、Cursor 或其他编程 Agent 里：
+
+```text
+Read https://raw.githubusercontent.com/kubai087/glasswork/main/INSTALL.md and follow it to add Glasswork's liquid glass to my project.
+```
+
+Agent 会使用这个仓库的代码，包括针对 Safari 和 iOS 的修复。具体步骤见 [INSTALL.md](INSTALL.md)。
+
+### 原帖的 Prompt
+
+这一段是帖子里附的原文，让 AI 从零实现同样的材质，为英文。
 
 <details>
 <summary><b>展开 Prompt</b></summary>
@@ -128,7 +142,7 @@ Hover brightens the tint by about 14% instead of lifting a shadow.
 
 ```html
 <script type="module">
-  import { liquidGlass } from 'https://cdn.jsdelivr.net/gh/kubai087/glasswork@v1.0.0/lens.js';
+  import { liquidGlass } from 'https://cdn.jsdelivr.net/gh/kubai087/glasswork@v1.1.0/lens.js';
   for (const el of document.querySelectorAll('.glass')) {
     liquidGlass(el, { rim: 40, edge: 1.1, power: 2.6, dispersion: 0.15 });
   }

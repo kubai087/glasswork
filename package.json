@@ -1,6 +1,6 @@
 {
   "name": "glasswork",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Lumno's liquid glass material: tokens, a refracting thick-rim lens and wallpaper-adaptive ink, with a live playground.",
   "type": "module",
   "main": "lens.js",
@@ -8,12 +8,15 @@
     ".": "./lens.js",
     "./lens.js": "./lens.js",
     "./adapt.js": "./adapt.js",
-    "./glass.css": "./glass.css"
+    "./glass.css": "./glass.css",
+    "./refract.js": "./refract.js"
   },
   "files": [
     "lens.js",
     "adapt.js",
-    "glass.css"
+    "glass.css",
+    "refract.js",
+    "INSTALL.md"
   ],
   "keywords": [
     "liquid-glass",
