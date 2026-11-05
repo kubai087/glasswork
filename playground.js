@@ -285,7 +285,43 @@ function apply() {
   applyLens();
   markPills();
   sampleSoon(true);
+  // After a theme or wallpaper change has finished gliding.
+  redrawGlass(700);
   save();
+}
+
+// Safari on iOS can leave a surface's glass layer undrawn once what is
+// behind it changes (the wallpaper video starting, a theme or wallpaper
+// switch, a glide between tints) until the surface moves. Giving the
+// layers a compositing hint for a moment rebuilds them, with nothing to
+// see. Chromium draws them anyway.
+const needsRedraw = /AppleWebKit/.test(navigator.userAgent) && !/Chrome|Chromium|CriOS|Edg/.test(navigator.userAgent);
+let redrawTimer = 0;
+// A redraw already on its way isn't put off by the next request, so a
+// stream of changes can't keep it from happening.
+function redrawGlass(delay = 120) {
+  if (!needsRedraw || redrawTimer) return;
+  redrawTimer = setTimeout(() => {
+    redrawTimer = 0;
+    for (const el of glasses) el.style.setProperty('--redraw', 'transform');
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      for (const el of glasses) el.style.removeProperty('--redraw');
+    }));
+  }, delay);
+}
+if (needsRedraw) {
+  // When a glide between materials ends (a theme or preset change). The
+  // readings off a moving wallpaper glide all the time and don't need it.
+  for (const el of glasses) {
+    el.addEventListener('transitionend', (event) => {
+      if (event.propertyName === '--m-tint' || event.propertyName === '--m-sat') redrawGlass();
+    });
+  }
+  // When the wallpaper starts moving or a new one shows.
+  addEventListener('playing', () => redrawGlass(), true);
+  addEventListener('loadeddata', () => redrawGlass(), true);
+  addEventListener('load', () => redrawGlass(), true);
+  addEventListener('pageshow', () => redrawGlass(400));
 }
 
 // Surfaces whose radius reaches half their height are capsules, which keep

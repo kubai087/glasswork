@@ -143,6 +143,8 @@
 }
 
 .glass::before {
+  /* Toggled for a moment to make Safari redraw the layer (playground.js). */
+  will-change: var(--redraw, auto);
   background: color-mix(in srgb, var(--m-tint) calc(var(--tint-a) * 100%), transparent);
   -webkit-backdrop-filter: var(--filter);
   backdrop-filter: var(--filter) var(--glass-lens,);
