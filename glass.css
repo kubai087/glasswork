@@ -173,13 +173,13 @@
 
 .glass .ink-2 { color: var(--ink-2); }
 
-/* WebKit (Safari, and every browser on iOS) can leave the larger surfaces
-   undrawn when their blurred element holds blended text: the player stays
-   blank until it is dragged, then paints in patches. There the ink is
-   drawn as plain translucent color, without a group to blend in. */
-[data-engine="webkit"] .glass { isolation: auto; }
-[data-engine="webkit"] .glass .ink,
-[data-engine="webkit"] .glass .ink-2 { mix-blend-mode: normal; }
+/* WebKit (Safari 27 and every browser on iOS) now draws corner-shape, but
+   on a phone it fails to draw a backdrop filter clipped to a superellipse:
+   the player, the one surface that isn't a capsule, stayed blank until it
+   was dragged and then painted in patches. There the glass keeps plain
+   round corners; what isn't glass (the album art) keeps its continuous
+   ones. */
+[data-engine="webkit"] .glass { corner-shape: round; }
 .glass svg.ink,
 .glass .ink svg { color: var(--ink-solid); opacity: var(--ink-a); }
 
