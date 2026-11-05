@@ -50,6 +50,8 @@ body[data-ui="off"] { --panel-w: 0px; }
 .wall {
   position: absolute;
   inset: 0;
+  /* Its own layer, so the scene canvas and your own file stay under the glass. */
+  z-index: 0;
 }
 
 .wall > * {
@@ -63,7 +65,9 @@ body[data-ui="off"] { --panel-w: 0px; }
 
 .wall .is-dark { opacity: 0; transition: opacity 620ms ease; }
 .stage[data-theme="dark"] .wall .is-dark { opacity: 1; }
-.wall .is-custom { z-index: 1; }
+.wall .is-scene { z-index: 1; }
+.wall .is-custom { z-index: 2; }
+.wall [hidden] { display: none; }
 
 /* ---------- The surfaces ---------- */
 
@@ -76,6 +80,8 @@ body[data-ui="off"] { --panel-w: 0px; }
   justify-content: center;
   gap: calc(22 * var(--u));
   padding: calc(24 * var(--u));
+  /* Room for the toolbar along the bottom. */
+  padding-bottom: calc(96 * var(--u));
   pointer-events: none;
 }
 
@@ -88,7 +94,7 @@ body[data-ui="off"] { --panel-w: 0px; }
 
 .surfaces > [data-dragging] { cursor: grabbing; }
 
-.surfaces svg {
+.stage svg {
   display: block;
   fill: none;
   stroke: currentColor;
@@ -97,7 +103,7 @@ body[data-ui="off"] { --panel-w: 0px; }
   stroke-linejoin: round;
 }
 
-.surfaces svg .fill { fill: currentColor; stroke: none; }
+.stage svg .fill { fill: currentColor; stroke: none; }
 
 .surfaces button {
   display: grid;
@@ -277,33 +283,82 @@ body[data-ui="off"] { --panel-w: 0px; }
   box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.08), 0 calc(2 * var(--u)) calc(6 * var(--u)) rgb(0 0 0 / 0.2);
 }
 
-/* The toolbar: one pill, its buttons lit on hover rather than glass of
-   their own (glass on glass doubles the blur). */
+/* The toolbar: one pill along the bottom of the free space, its buttons
+   lit on hover rather than glass of their own (glass on glass doubles the
+   blur). It stays put; the surfaces above it can be dragged. */
 .toolbar {
+  --b: max(36px, calc(44 * var(--u)));
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  bottom: max(14px, calc(22 * var(--u)));
+  translate: -50% 0;
   display: flex;
-  gap: calc(4 * var(--u));
-  padding: calc(6 * var(--u));
+  align-items: center;
+  gap: 2px;
+  padding: max(4px, calc(6 * var(--u)));
+  border-radius: 999px;
 }
 
-.toolbar button {
-  width: calc(44 * var(--u));
-  height: calc(44 * var(--u));
+.toolbar :is(button, a) {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--b);
+  height: var(--b);
+  padding: 0;
+  border: 0;
   border-radius: 50%;
+  background: none;
+  color: inherit;
+  cursor: pointer;
   transition: background-color 160ms ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.toolbar button svg { width: calc(22 * var(--u)); height: calc(22 * var(--u)); }
-.toolbar button[aria-pressed="false"] { opacity: 0.45; }
-.toolbar .moon { display: none; }
-.stage[data-theme="dark"] .toolbar .sun { display: none; }
-.stage[data-theme="dark"] .toolbar .moon { display: block; }
+.toolbar svg { width: calc(var(--b) * 0.5); height: calc(var(--b) * 0.5); }
+.toolbar a svg { width: calc(var(--b) * 0.44); height: calc(var(--b) * 0.44); }
+.toolbar .sep { width: 1px; height: calc(var(--b) * 0.5); margin: 0 4px; background: var(--well); }
+.toolbar [aria-pressed="false"] svg { opacity: calc(var(--ink-a) * 0.4); }
+.toolbar .moon,
+.toolbar .is-play { display: none; }
+.stage[data-theme="dark"] .toolbar .sun,
+.stage[data-paused] .toolbar .is-pause { display: none; }
+.stage[data-theme="dark"] .toolbar .moon,
+.stage[data-paused] .toolbar .is-play { display: block; }
+
+/* A tip above each button: what it does and its key. */
+.toolbar [data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 14px);
+  left: 50%;
+  translate: -50% 4px;
+  padding: 7px 11px;
+  border-radius: 10px;
+  background: rgb(24 24 28 / 0.82);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  box-shadow: inset 0 0 0 0.5px rgb(255 255 255 / 0.12), 0 6px 18px rgb(0 0 0 / 0.2);
+  color: rgb(255 255 255 / 0.94);
+  font: 500 12px / 1 var(--font);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease, translate 140ms ease;
+}
 
 @media (hover: hover) {
-  .surfaces button:hover { background-color: var(--row-hover); }
+  .surfaces button:hover,
+  .toolbar :is(button, a):hover { background-color: var(--row-hover); }
+  .toolbar [data-tip]:hover::after { opacity: 1; translate: -50% 0; transition-delay: 250ms; }
 }
 
-.surfaces button:active { background-color: var(--row-active); }
-.surfaces button:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+.toolbar [data-tip]:focus-visible::after { opacity: 1; translate: -50% 0; }
+.surfaces button:active,
+.toolbar :is(button, a):active { background-color: var(--row-active); }
+.surfaces button:focus-visible,
+.toolbar :is(button, a):focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
 
 /* ---------- The settings ---------- */
 
@@ -397,19 +452,19 @@ body[data-ui="off"] .sidebar { display: none; }
 /* ---------- Phones ---------- */
 
 /* The stage on top, the settings in a sheet below it. The settings start
-   folded away; the toolbar's last button brings them up. */
+   folded away; the toolbar's settings button brings them up. */
 @media (max-width: 720px) {
   :root {
     --panel-w: 0px;
     --sheet-h: min(52dvh, 480px);
   }
 
-  /* A phone is narrow, so the surfaces size to its width. */
-  .stage { --u: clamp(0.56px, min(100cqw / 420, 100cqh / 600), 1.2px); }
-
   body[data-ui="off"] { --sheet-h: 0px; }
 
   .view { inset: 0 0 var(--sheet-h) 0; }
+
+  /* A phone is narrow, so the surfaces size to its width. */
+  .stage { --u: clamp(0.56px, min(100cqw / 420, 100cqh / 600), 1.2px); }
 
   .sidebar {
     top: auto;
@@ -422,8 +477,10 @@ body[data-ui="off"] .sidebar { display: none; }
     overscroll-behavior: contain;
   }
 
-  .surfaces { padding-bottom: calc(24 * var(--u) + env(safe-area-inset-bottom)); }
-  body:not([data-ui="off"]) .surfaces { padding-bottom: calc(24 * var(--u)); }
+  .surfaces { padding-bottom: max(60px, calc(80 * var(--u))); }
+  body[data-ui="off"] .surfaces { padding-bottom: calc(max(60px, 80 * var(--u)) + env(safe-area-inset-bottom)); }
+  body[data-ui="off"] .toolbar { bottom: calc(max(14px, 22 * var(--u)) + env(safe-area-inset-bottom)); }
+  .toolbar .sep { margin: 0 2px; }
 }
 
 @media (pointer: coarse) {

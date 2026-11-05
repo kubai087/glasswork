@@ -41,11 +41,11 @@ export function sampler() {
   };
 
   return {
-    // Draws `source` (img or video) as it covers a stage of this size.
+    // Draws `source` (img, video or canvas) as it covers a stage of this size.
     // Returns false when there is nothing to draw yet.
     capture(source, stageWidth, stageHeight) {
-      const sw = source.videoWidth || source.naturalWidth;
-      const sh = source.videoHeight || source.naturalHeight;
+      const sw = source.videoWidth || source.naturalWidth || source.width;
+      const sh = source.videoHeight || source.naturalHeight || source.height;
       if (!sw || !sh || (source.readyState !== undefined && source.readyState < 2)) return false;
       width = Math.max(1, Math.round(stageWidth * SAMPLE_SCALE));
       height = Math.max(1, Math.round(stageHeight * SAMPLE_SCALE));

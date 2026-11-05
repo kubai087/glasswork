@@ -1,19 +1,21 @@
 /*
- * Liquid Glass Playground: Lumno's liquid glass over macOS Tahoe's dynamic
- * wallpaper, with every part of the material on the panel.
+ * Glasswork: Lumno's liquid glass material over a moving wallpaper, with
+ * every part of the material on the panel.
  *
  * - glass.css: the material, as tokens; each surface uses four declarations.
  * - lens.js: the rim lens (Chromium), a standalone module.
  * - adapt.js: reading the wallpaper under each surface: ink, tint density,
  *   saturation and the least tint its text needs.
+ * - wallpapers.js: moving wallpapers drawn live in WebGL, besides Tahoe.
  *
  * Every setting goes in the URL (only those that differ from the defaults),
  * so a reload or a shared link opens the same glass. Keys: H hides the
- * panel, T switches the theme, Space pauses the wallpaper.
+ * panel, T switches the theme, W the wallpaper, Space pauses it.
  */
 import { liquidGlass, isLensSupported } from './lens.js';
 import { sampler, pickInk, adapt, tintFloor, luma } from './adapt.js';
 import { createPane } from './panel.js';
+import { createScene, SCENES } from './wallpapers.js';
 import { language, t, translate } from './i18n.js';
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -22,14 +24,16 @@ const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const stage = $('.stage');
 const wall = $('.wall');
 const videos = { light: $('.wall .is-light'), dark: $('.wall .is-dark') };
+// The surfaces that can be dragged, and every pane of glass.
 const surfaces = $$('.surfaces > .glass');
+const toolbar = $('.toolbar');
+const glasses = [...surfaces, toolbar];
 const player = $('.player');
 const tintRange = $('.tint-range');
 const tintValue = $('.tint-value');
 const dialog = $('.code-dialog');
 const params = new URLSearchParams(location.search);
 const PHONE = matchMedia('(max-width: 720px)');
-const systemTheme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 const cornerShapes = typeof CSS !== 'undefined' && CSS.supports?.('corner-shape', 'superellipse(2)');
 const lensSupported = isLensSupported();
 
@@ -41,10 +45,19 @@ const MATERIALS = {
   dark: { tint: '#1e1e22', opacity: 1, thin: 0.16, dense: 0.38, blur: 2, saturation: 1.6, brightness: 0.8, contrast: 1, rimLight: 1, bevel: 1, shadow: 1 },
 };
 
+// The wallpapers, in the panel's order: macOS Tahoe's (a video, Apple's),
+// the scenes drawn live (wallpapers.js), and the visitor's own file.
+const WALLPAPERS = { Tahoe: 'tahoe', Mesh: 'mesh', Dunes: 'dunes', Aurora: 'aurora', Lava: 'lava', Rings: 'lines', Bokeh: 'bokeh', 'Your own': 'custom' };
+
 const DEFAULTS = {
-  theme: systemTheme,
-  // auto reads the wallpaper; dark or light holds one ink everywhere.
-  ink: 'auto',
+  theme: 'light',
+  wallpaper: 'tahoe',
+  // How fast the wallpaper moves.
+  speed: 1,
+  // theme: dark ink on light glass under the light theme, light ink on
+  // dark glass under the dark one; auto reads the wallpaper under each
+  // surface; dark or light holds one ink everywhere.
+  ink: 'theme',
   // The tint's density from the wallpaper, or the one set here.
   autoDensity: true,
   density: 0.35,
@@ -66,19 +79,26 @@ const DEFAULTS = {
 
 const LIMITS = {
   density: [0, 1], threshold: [0.2, 0.8], rim: [4, 96], edge: [0, 2.5], power: [1, 6], dispersion: [0, 0.4],
-  radius: [0, 60], smoothing: [0.5, 3],
+  radius: [0, 60], smoothing: [0.5, 3], speed: [0, 3],
   opacity: [0, 1.5], thin: [0, 0.8], dense: [0, 0.95], blur: [0, 40], saturation: [0, 3], brightness: [0.4, 1.6],
   contrast: [0.4, 1.6], rimLight: [0, 2], bevel: [0, 2.5], shadow: [0, 3],
 };
 
-// Starting points: each is laid over the defaults.
+// Starting points for the material. A preset sets only the material's
+// body (PRESET_KEYS), each value it leaves out back to Lumno's; the tint's
+// color and opacity, the scene, the adaptation and the shape stay as they
+// are.
+const PRESET_KEYS = {
+  state: ['lens', 'rim', 'edge', 'power', 'dispersion'],
+  material: ['thin', 'dense', 'blur', 'saturation', 'brightness', 'contrast', 'rimLight', 'bevel', 'shadow'],
+};
 const PRESETS = {
   Lumno: {},
-  'Clear glass': { light: { opacity: 0 }, dark: { opacity: 0 } },
+  'Clear glass': { light: { thin: 0, dense: 0 }, dark: { thin: 0, dense: 0 } },
   Frosted: {
     lens: false,
     light: { thin: 0.42, dense: 0.68, blur: 30, saturation: 1.7, contrast: 0.6, brightness: 1.18, bevel: 0.4 },
-    dark: { tint: '#28282c', thin: 0.24, dense: 0.48, blur: 30, saturation: 1.5, contrast: 0.82, brightness: 0.7, bevel: 0.4 },
+    dark: { thin: 0.24, dense: 0.48, blur: 30, saturation: 1.5, contrast: 0.82, brightness: 0.7, bevel: 0.4 },
   },
   'Thick slab': {
     rim: 64, edge: 1.6, power: 2, dispersion: 0.24,
@@ -93,14 +113,46 @@ const PRESETS = {
 
 // Tints to start from, for each material.
 const SWATCHES = {
-  light: { Clear: '#ffffff', Warm: '#fff3e2', Sky: '#dcebff', Rose: '#ffe0ea', Mint: '#d9f6e8', Lilac: '#ebe2ff', Amber: '#ffe3ad', Lemon: '#fbf6c4' },
-  dark: { Graphite: '#1e1e22', Night: '#0f1a2e', Plum: '#2a1731', Forest: '#10261c', Ocean: '#0a2637', Wine: '#2f1218', Cocoa: '#2a1d14', Black: '#000000' },
+  light: { Clear: '#ffffff', Warm: '#fff3e2', Sky: '#dcebff', Rose: '#ffe0ea', Mint: '#d9f6e8', Lilac: '#ebe2ff', Sand: '#ffe3ad', Lime: '#eaf8c4' },
+  dark: { Slate: '#1e1e22', Night: '#0f1a2e', Plum: '#2a1731', Forest: '#10261c', Ocean: '#0a2637', Wine: '#2f1218', Cocoa: '#2a1d14', Black: '#000000' },
 };
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const state = { ...DEFAULTS };
 const materials = clone(MATERIALS);
-const chosen = { preset: 'Lumno', wallpaper: 'tahoe' };
+const chosen = { preset: 'Lumno' };
+const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+const pick = (source, keys) => Object.fromEntries(keys.map((key) => [key, source[key]]));
+
+// What a preset stands for: Lumno's values for the keys presets set, with
+// the preset's own laid over them.
+function presetValues(name) {
+  const { light, dark, ...rest } = PRESETS[name] ?? {};
+  return {
+    state: { ...pick(DEFAULTS, PRESET_KEYS.state), ...rest },
+    light: { ...pick(MATERIALS.light, PRESET_KEYS.material), ...light },
+    dark: { ...pick(MATERIALS.dark, PRESET_KEYS.material), ...dark },
+  };
+}
+
+function applyPreset(name) {
+  const values = presetValues(name);
+  chosen.preset = name;
+  Object.assign(state, values.state);
+  Object.assign(materials.light, values.light);
+  Object.assign(materials.dark, values.dark);
+}
+
+// Where the URL counts from: the defaults under the chosen preset. Only
+// what differs from it goes in the URL.
+function baseline() {
+  const values = presetValues(chosen.preset);
+  return {
+    state: { ...DEFAULTS, ...values.state },
+    light: { ...MATERIALS.light, ...values.light },
+    dark: { ...MATERIALS.dark, ...values.dark },
+  };
+}
 
 const clampTo = (value, [lo, hi]) => Math.min(hi, Math.max(lo, value));
 const isHex = (raw) => /^#?[0-9a-f]{6}$/i.test(raw);
@@ -120,6 +172,8 @@ function parseInto(target, key, raw, fallback) {
   }
 }
 
+// ?preset= starts from a preset; the other values override it.
+applyPreset(Object.keys(PRESETS).find((name) => slug(name) === params.get('preset')?.toLowerCase()) ?? 'Lumno');
 for (const [key, fallback] of Object.entries(DEFAULTS)) {
   if (params.has(key)) parseInto(state, key, params.get(key), fallback);
 }
@@ -130,7 +184,8 @@ for (const kind of ['light', 'dark']) {
   }
 }
 if (!['light', 'dark'].includes(state.theme)) state.theme = DEFAULTS.theme;
-if (!['auto', 'light', 'dark'].includes(state.ink)) state.ink = 'auto';
+if (!['theme', 'auto', 'light', 'dark'].includes(state.ink)) state.ink = DEFAULTS.ink;
+if (!Object.values(WALLPAPERS).includes(state.wallpaper) || state.wallpaper === 'custom') state.wallpaper = DEFAULTS.wallpaper;
 
 const format = (value) => {
   if (typeof value === 'boolean') return value ? '1' : '0';
@@ -143,17 +198,20 @@ function save() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
     const next = new URLSearchParams();
-    for (const [key, fallback] of Object.entries(DEFAULTS)) {
-      if (state[key] !== fallback) next.set(key, format(state[key]));
+    const base = baseline();
+    const differs = (a, b) => format(a) !== format(b);
+    if (chosen.preset !== 'Lumno') next.set('preset', slug(chosen.preset));
+    for (const key of Object.keys(DEFAULTS)) {
+      // A file of the visitor's own can't go in a link.
+      if (key === 'wallpaper' && state.wallpaper === 'custom') continue;
+      if (differs(state[key], base.state[key])) next.set(key, format(state[key]));
     }
     for (const kind of ['light', 'dark']) {
-      for (const [key, fallback] of Object.entries(MATERIALS[kind])) {
-        if (materials[kind][key] !== fallback) next.set(`${kind[0]}.${key}`, format(materials[kind][key]));
+      for (const key of Object.keys(MATERIALS[kind])) {
+        if (differs(materials[kind][key], base[kind][key])) next.set(`${kind[0]}.${key}`, format(materials[kind][key]));
       }
     }
-    if (params.has('lang') || language.value !== (navigator.language?.toLowerCase().startsWith('zh') ? 'zh' : 'en')) {
-      next.set('lang', language.value);
-    }
+    if (language.value !== 'en') next.set('lang', language.value);
     if (params.has('ui')) next.set('ui', params.get('ui'));
     const search = next.toString();
     history.replaceState(null, '', location.pathname + (search ? `?${search}` : '') + location.hash);
@@ -200,7 +258,9 @@ function apply() {
   stage.style.setProperty('--radius', state.radius);
   stage.style.setProperty('--corner-k', state.smoothing);
   stage.dataset.theme = state.theme;
-  setPaused(state.paused);
+  document.body.dataset.theme = state.theme;
+  syncPlayback();
+  labelToolbar();
   syncTintControl();
   applyLens();
   sampleSoon();
@@ -231,21 +291,53 @@ const posters = Object.fromEntries(Object.entries(videos).map(([kind, video]) =>
   return [kind, image];
 }));
 
-const currentVideo = () => (chosen.wallpaper === 'custom' && custom ? (custom.tagName === 'VIDEO' ? custom : null) : videos[state.theme]);
+// The scenes drawn live share one canvas over the videos.
+const sceneCanvas = Object.assign(document.createElement('canvas'), { className: 'is-scene', hidden: true });
+wall.append(sceneCanvas);
+const scene = createScene(sceneCanvas);
+if (!scene && SCENES[state.wallpaper]) state.wallpaper = 'tahoe';
+scene?.setDark(state.theme === 'dark', true);
+const scenesSupported = Boolean(scene);
+const isScene = () => Boolean(scene && SCENES[state.wallpaper]);
 
-function playVisible() {
-  for (const [kind, video] of Object.entries(videos)) {
-    const visible = chosen.wallpaper === 'tahoe' && kind === state.theme;
-    if (visible && !state.paused) video.play().catch(() => {});
-  }
-  if (custom?.tagName === 'VIDEO' && chosen.wallpaper === 'custom' && !state.paused) custom.play().catch(() => {});
+// The player's clock: the playing video, or the scene's time over a minute.
+const SCENE_LOOP = 60;
+function clockSource() {
+  if (state.wallpaper === 'custom') return custom?.tagName === 'VIDEO' ? custom : null;
+  if (isScene()) return { currentTime: scene.time % SCENE_LOOP, duration: SCENE_LOOP };
+  return videos[state.theme];
 }
 
-function setPaused(paused) {
-  stage.toggleAttribute('data-paused', paused);
-  const all = [...Object.values(videos), custom].filter((v) => v?.tagName === 'VIDEO');
-  if (paused) all.forEach((v) => v.pause());
-  else playVisible();
+// Plays what shows and stops the rest. The Tahoe videos only load once
+// Tahoe is chosen; the theme's other video keeps playing while it fades
+// out (switchTheme stops it).
+function syncPlayback() {
+  const tahoe = state.wallpaper === 'tahoe';
+  const rate = Math.max(0.0625, state.speed);
+  for (const [kind, video] of Object.entries(videos)) {
+    video.playbackRate = rate;
+    if (!tahoe || state.paused || state.speed === 0) video.pause();
+    else if (kind === state.theme) {
+      video.preload = 'auto';
+      video.play().catch(() => {});
+    }
+  }
+  if (custom) {
+    custom.hidden = state.wallpaper !== 'custom';
+    if (custom.tagName === 'VIDEO') {
+      custom.playbackRate = rate;
+      if (state.wallpaper === 'custom' && !state.paused && state.speed > 0) custom.play().catch(() => {});
+      else custom.pause();
+    }
+  }
+  if (scene) {
+    scene.setVisible(isScene());
+    if (isScene()) scene.setMode(state.wallpaper);
+    scene.setSpeed(state.speed);
+    scene.setPlaying(!state.paused);
+    scene.setDark(state.theme === 'dark');
+  }
+  stage.toggleAttribute('data-paused', state.paused);
 }
 
 // The incoming theme's video picks up where the other left off, and the
@@ -259,7 +351,6 @@ function switchTheme(next) {
     to.currentTime = from.currentTime % to.duration;
   }
   state.theme = next;
-  if (!state.paused && chosen.wallpaper === 'tahoe') to.play().catch(() => {});
   clearTimeout(fadeTimer);
   fadeTimer = setTimeout(() => {
     if (state.theme !== next) return;
@@ -267,7 +358,7 @@ function switchTheme(next) {
   }, 700);
   tabs?.pages[next === 'dark' ? 1 : 0] && (tabs.pages[next === 'dark' ? 1 : 0].selected = true);
   apply();
-  pane?.refresh();
+  refreshPanel();
 }
 
 const upload = Object.assign(document.createElement('input'), { type: 'file', accept: 'image/*,video/*', hidden: true });
@@ -280,7 +371,8 @@ upload.addEventListener('change', () => {
   const isVideo = file.type.startsWith('video/');
   const el = document.createElement(isVideo ? 'video' : 'img');
   el.className = 'is-custom';
-  if (isVideo) Object.assign(el, { muted: true, loop: true, playsInline: true, autoplay: !state.paused });
+  if (isVideo) Object.assign(el, { muted: true, loop: true, playsInline: true });
+  el.addEventListener(isVideo ? 'loadeddata' : 'load', sampleSoon, { once: true });
   el.src = url;
   if (custom) {
     URL.revokeObjectURL(custom.src);
@@ -288,21 +380,19 @@ upload.addEventListener('change', () => {
   }
   custom = el;
   wall.append(el);
-  chosen.wallpaper = 'custom';
-  (isVideo ? el : el).addEventListener(isVideo ? 'loadeddata' : 'load', sampleSoon, { once: true });
-  showWallpaper();
-  pane?.refresh();
+  state.wallpaper = 'custom';
+  apply();
+  refreshPanel();
 });
 
+// Choosing "Your own" before giving a file asks for one.
 function showWallpaper() {
-  if (chosen.wallpaper === 'custom' && !custom) {
-    chosen.wallpaper = 'tahoe';
+  if (state.wallpaper === 'custom' && !custom) {
+    state.wallpaper = 'tahoe';
     upload.click();
   }
-  if (custom) custom.hidden = chosen.wallpaper !== 'custom';
-  if (chosen.wallpaper === 'custom') Object.values(videos).forEach((v) => v.pause());
-  playVisible();
-  sampleSoon();
+  apply();
+  refreshPanel();
 }
 
 // ---------- Reading the wallpaper ----------
@@ -311,7 +401,8 @@ const read = sampler();
 const readout = { luminance: '–', ink: '–', density: '–', floor: '–', tint: '–' };
 
 function wallpaperSource() {
-  if (chosen.wallpaper === 'custom' && custom) return custom;
+  if (state.wallpaper === 'custom' && custom) return custom;
+  if (isScene()) return sceneCanvas;
   const video = videos[state.theme];
   return video.readyState >= 2 ? video : posters[state.theme];
 }
@@ -325,8 +416,8 @@ function decide(el, stageBox) {
   const box = el.getBoundingClientRect();
   const patch = read.ready ? read.sample({ x: box.left - stageBox.left, y: box.top - stageBox.top, w: box.width, h: box.height }) : null;
   let ink;
-  if (state.ink !== 'auto') ink = state.ink;
-  else if (state.theme === 'dark') ink = 'light';
+  if (state.ink === 'light' || state.ink === 'dark') ink = state.ink;
+  else if (state.ink === 'theme' || state.theme === 'dark') ink = state.theme === 'dark' ? 'light' : 'dark';
   else ink = patch ? pickInk(patch.luminance, el.dataset.ink, state.threshold) : 'dark';
   const kind = ink === 'light' ? 'dark' : 'light';
   el.dataset.ink = ink;
@@ -360,7 +451,7 @@ function sampleNow() {
   sampleFrame = 0;
   const stageBox = stage.getBoundingClientRect();
   read.capture(wallpaperSource(), stageBox.width, stageBox.height);
-  for (const el of surfaces) decide(el, stageBox);
+  for (const el of glasses) decide(el, stageBox);
 }
 
 function sampleSoon() {
@@ -382,7 +473,7 @@ const clock = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStar
 let shown = '';
 
 function tick() {
-  const video = currentVideo();
+  const video = clockSource();
   if (video?.duration) {
     const now = video.currentTime;
     const total = video.duration;
@@ -399,6 +490,7 @@ function tick() {
 requestAnimationFrame(tick);
 
 function seek(by) {
+  if (isScene()) scene.time += by;
   const all = [...Object.values(videos), custom].filter((v) => v?.tagName === 'VIDEO' && v.duration);
   for (const v of all) v.currentTime = (v.currentTime + by + v.duration) % v.duration;
   sampleSoon();
@@ -451,7 +543,7 @@ tintRange.addEventListener('input', () => {
   tuning();
   materials[themeKind()].opacity = Number(tintRange.value) / 100;
   apply();
-  pane?.refresh();
+  refreshPanel();
 });
 
 const togglePanel = () => {
@@ -463,20 +555,38 @@ const actions = {
   lens: () => {
     state.lens = !state.lens;
     apply();
-    pane?.refresh();
+    refreshPanel();
   },
   code: () => openCode(),
   panel: togglePanel,
   play: () => {
     state.paused = !state.paused;
     apply();
-    pane?.refresh();
+    refreshPanel();
   },
   back: () => seek(-5),
   forward: () => seek(5),
+  // The next wallpaper in the panel's list.
+  wallpaper: () => {
+    const keys = Object.values(WALLPAPERS).filter((key) => key !== 'custom' && (scenesSupported || !SCENES[key]));
+    state.wallpaper = keys[(keys.indexOf(state.wallpaper) + 1) % keys.length];
+    apply();
+    refreshPanel();
+  },
 };
 
-for (const button of $$('.surfaces [data-action]')) {
+// The toolbar's tips: what a button does, and its key.
+function labelToolbar() {
+  for (const el of $$('[data-tip-key]', toolbar)) {
+    let key = el.dataset.tipKey;
+    if (key === 'Pause wallpaper' && state.paused) key = 'Play wallpaper';
+    const text = el.dataset.key ? `${t(key)}  ${el.dataset.key === 'Space' ? t('Space') : el.dataset.key}` : t(key);
+    el.dataset.tip = text;
+    el.setAttribute('aria-label', t(key));
+  }
+}
+
+for (const button of $$('.stage [data-action]')) {
   button.addEventListener('click', () => actions[button.dataset.action]?.());
 }
 
@@ -485,6 +595,7 @@ addEventListener('keydown', (event) => {
   const key = event.key.toLowerCase();
   if (key === 'h') togglePanel();
   else if (key === 't') actions.theme();
+  else if (key === 'w') actions.wallpaper();
   else if (key === ' ') {
     event.preventDefault();
     actions.play();
@@ -563,7 +674,7 @@ function exportCss() {
     '}',
   ].join('\n');
   const css = [
-    "/* Lumno's liquid glass, from the Liquid Glass Playground.\n   Light glass with dark ink by default; .glass.is-dark for dark glass with light ink. */",
+    "/* Lumno's liquid glass, from Glasswork (https://www.kubai.design/glasswork/).\n   Light glass with dark ink by default; .glass.is-dark for dark glass with light ink. */",
     shape,
     materialCss('light', '.glass'),
     materialCss('dark', '.glass.is-dark'),
@@ -572,7 +683,7 @@ function exportCss() {
   const options = `{ rim: ${n(state.rim, 1)}, edge: ${n(state.edge, 2)}, power: ${n(state.power, 2)}, dispersion: ${n(state.dispersion, 3)} }`;
   return `${css}\n\n<!-- The rim lens (Chromium); everywhere else the CSS glass stays as it is. -->
 <script type="module">
-  import { liquidGlass } from 'https://cdn.jsdelivr.net/gh/kubai087/liquid-glass@main/lens.js';
+  import { liquidGlass } from 'https://cdn.jsdelivr.net/gh/kubai087/glasswork@main/lens.js';
   for (const el of document.querySelectorAll('.glass')) liquidGlass(el, ${options});
 </script>`;
 }
@@ -605,24 +716,39 @@ dialog.addEventListener('click', async (event) => {
 
 let pane = null;
 let tabs = null;
+// The swatches show the tint when it is one of theirs; the density slider
+// is off while the wallpaper sets it.
+const swatch = { light: materials.light.tint, dark: materials.dark.tint };
+const swatchBindings = {};
+let densityBinding = null;
+
+// Brings every control on the panel in line with the settings, after a
+// change made anywhere but the control itself.
+function refreshPanel() {
+  if (!pane) return;
+  for (const kind of ['light', 'dark']) swatch[kind] = materials[kind].tint;
+  if (densityBinding) densityBinding.disabled = state.autoDensity;
+  pane.refresh();
+}
 
 if (params.get('ui') === '0' || (!params.has('ui') && PHONE.matches)) document.body.dataset.ui = 'off';
 
-for (const el of surfaces) {
+for (const el of glasses) {
   lenses.set(el, liquidGlass(el, lensOptions()));
 }
 apply();
 translate(document.body);
-playVisible();
 
-function resetTo(presetName) {
-  Object.assign(state, DEFAULTS, { theme: state.theme, paused: state.paused });
+// Reset: every setting back to Lumno's, but the scene (theme, wallpaper,
+// motion) stays, and the surfaces go back in place.
+function resetAll() {
+  Object.assign(state, DEFAULTS, pick(state, ['theme', 'wallpaper', 'speed', 'paused']));
   for (const kind of ['light', 'dark']) Object.assign(materials[kind], MATERIALS[kind]);
-  const preset = PRESETS[presetName] ?? {};
-  const { light, dark, ...rest } = preset;
-  Object.assign(state, rest);
-  Object.assign(materials.light, light);
-  Object.assign(materials.dark, dark);
+  applyPreset('Lumno');
+  for (const el of surfaces) {
+    el.style.removeProperty('--dx');
+    el.style.removeProperty('--dy');
+  }
 }
 
 async function buildPane() {
@@ -633,14 +759,13 @@ async function buildPane() {
     label: 'Preset',
     options: Object.fromEntries(Object.keys(PRESETS).map((k) => [k, k])),
   }).on('change', ({ value }) => {
-    resetTo(value);
+    applyPreset(value);
     apply();
-    pane.refresh();
-    translate(pane.element);
+    refreshPanel();
   });
 
-  const scene = pane.addFolder({ title: 'Scene' });
-  scene.addBinding(state, 'theme', {
+  const sceneFolder = pane.addFolder({ title: 'Scene' });
+  sceneFolder.addBinding(state, 'theme', {
     label: 'Theme',
     view: 'radiogrid',
     groupName: 'theme',
@@ -652,21 +777,20 @@ async function buildPane() {
     state.theme = value === 'dark' ? 'light' : 'dark';
     switchTheme(value);
   });
-  scene.addBinding(state, 'ink', {
+  sceneFolder.addBinding(state, 'ink', {
     label: 'Ink',
-    options: { Auto: 'auto', Dark: 'dark', Light: 'light' },
+    options: { 'Follow theme': 'theme', 'Auto (wallpaper)': 'auto', Dark: 'dark', Light: 'light' },
   });
-  scene.addBinding(chosen, 'wallpaper', {
+  sceneFolder.addBinding(state, 'wallpaper', {
     label: 'Wallpaper',
-    options: { Tahoe: 'tahoe', 'Your own': 'custom' },
+    options: Object.fromEntries(Object.entries(WALLPAPERS).filter(([, key]) => scenesSupported || !SCENES[key])),
   }).on('change', showWallpaper);
-  scene.addButton({ title: 'Upload wallpaper…' }).on('click', () => upload.click());
-  scene.addBinding(state, 'paused', { label: 'Paused' });
+  sceneFolder.addButton({ title: 'Upload wallpaper…' }).on('click', () => upload.click());
+  sceneFolder.addBinding(state, 'speed', { label: 'Speed', min: 0, max: 3, step: 0.05 });
+  sceneFolder.addBinding(state, 'paused', { label: 'Paused' });
 
   const material = pane.addFolder({ title: 'Material' });
   tabs = material.addTab({ pages: [{ title: 'Light glass' }, { title: 'Dark glass' }] });
-  const swatch = { light: materials.light.tint, dark: materials.dark.tint };
-  const swatchBindings = {};
   ['light', 'dark'].forEach((kind, index) => {
     const page = tabs.pages[index];
     const m = materials[kind];
@@ -685,7 +809,7 @@ async function buildPane() {
       if (m.tint === value) return;
       m.tint = value;
       apply();
-      pane.refresh();
+      refreshPanel();
     });
     page.addBinding(m, 'opacity', { label: 'Opacity', min: 0, max: 1.5, step: 0.01 });
     page.addBinding(m, 'thin', { label: 'Thin', min: 0, max: 0.8, step: 0.01 });
@@ -704,7 +828,7 @@ async function buildPane() {
 
   const adaptFolder = pane.addFolder({ title: 'Adapt' });
   adaptFolder.addBinding(state, 'autoDensity', { label: 'Auto density' });
-  const densityBinding = adaptFolder.addBinding(state, 'density', { label: 'Density', min: 0, max: 1, step: 0.01 });
+  densityBinding = adaptFolder.addBinding(state, 'density', { label: 'Density', min: 0, max: 1, step: 0.01 });
   adaptFolder.addBinding(state, 'legible', { label: 'Keep legible' });
   adaptFolder.addBinding(state, 'threshold', { label: 'Threshold', min: 0.2, max: 0.8, step: 0.01 });
   adaptFolder.addBlade({ view: 'separator' });
@@ -739,17 +863,9 @@ async function buildPane() {
     } catch {}
   });
   pane.addButton({ title: 'Reset' }).on('click', () => {
-    chosen.preset = 'Lumno';
-    resetTo('Lumno');
-    for (const el of surfaces) {
-      el.style.removeProperty('--dx');
-      el.style.removeProperty('--dy');
-    }
-    swatch.light = materials.light.tint;
-    swatch.dark = materials.dark.tint;
+    resetAll();
     apply();
-    pane.refresh();
-    translate(pane.element);
+    refreshPanel();
   });
 
   pane.addBinding(language, 'value', {
@@ -760,12 +876,12 @@ async function buildPane() {
     cells: (x) => [{ title: 'EN', value: 'en' }, { title: '中文', value: 'zh' }][x],
   }).on('change', () => {
     translate(document.body);
+    labelToolbar();
     sampleNow();
     save();
   });
 
-  const syncDensity = () => { densityBinding.disabled = state.autoDensity; };
-  syncDensity();
+  densityBinding.disabled = state.autoDensity;
 
   const STYLE_ONLY = new Set(['theme', 'ink', 'preset', 'wallpaper', 'value']);
   pane.on('change', (event) => {
@@ -778,11 +894,14 @@ async function buildPane() {
         swatchBindings[kind].refresh();
       }
     }
-    syncDensity();
+    densityBinding.disabled = state.autoDensity;
     apply();
   });
 
   translate(pane.element);
 }
 
-buildPane();
+buildPane().then(() => {
+  // For the browser console.
+  window.__glass = { state, materials, pane, apply };
+});

@@ -36,7 +36,7 @@ export async function createPane(options) {
     pane.registerPlugin(Essentials);
     return pane;
   } catch {
-    console.warn('Liquid Glass: the settings panel could not be loaded; the glass works without it.');
+    console.warn('Glasswork: the settings panel could not be loaded; the glass works without it.');
     return standIn();
   }
 }

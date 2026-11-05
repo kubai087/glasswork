@@ -2,7 +2,7 @@
  * The page in English or Simplified Chinese. Everything is written in
  * English; translate() swaps the text of the panel's labels, titles and
  * options and of the page's [data-i18n] elements, and swaps it back.
- * English unless the URL says ?lang=zh or the browser prefers Chinese.
+ * English unless the URL says ?lang=zh (the panel's switch puts it there).
  */
 
 const ZH = {
@@ -13,11 +13,26 @@ const ZH = {
   Dark: '深色',
   Ink: '文字墨色',
   Auto: '自动',
+  'Follow theme': '跟随主题',
+  'Auto (wallpaper)': '自动（读取壁纸）',
+  'Light / dark': '浅色 / 深色',
+  'Next wallpaper': '下一张壁纸',
+  'Pause wallpaper': '暂停壁纸',
+  'Play wallpaper': '播放壁纸',
+  'Source on GitHub': 'GitHub 源码',
+  Space: '空格',
   Wallpaper: '壁纸',
   Tahoe: 'Tahoe 动态壁纸',
   'Your own': '自定义',
   'Upload wallpaper…': '上传壁纸…',
   Paused: '暂停壁纸',
+  Speed: '速度',
+  Mesh: '流光渐变',
+  Dunes: '沙丘',
+  Aurora: '极光',
+  Lava: '熔岩',
+  Rings: '波纹',
+  Bokeh: '光斑',
   // Material
   Material: '材质',
   'Light glass': '浅色玻璃',
@@ -40,9 +55,9 @@ const ZH = {
   Rose: '玫瑰',
   Mint: '薄荷',
   Lilac: '丁香',
-  Amber: '琥珀',
-  Lemon: '柠檬',
-  Graphite: '石墨',
+  Sand: '沙色',
+  Lime: '青柠',
+  Slate: '石墨',
   Night: '夜蓝',
   Plum: '梅紫',
   Forest: '森绿',
@@ -93,9 +108,8 @@ const ZH = {
   'The material at the settings you see now. The lens needs lens.js, from this repository.': '当前设置下的材质。边缘折射需要本仓库的 lens.js。',
 };
 
-const asked = new URLSearchParams(location.search).get('lang');
 export const language = {
-  value: (asked ?? navigator.language ?? '').toLowerCase().startsWith('zh') ? 'zh' : 'en',
+  value: new URLSearchParams(location.search).get('lang')?.toLowerCase().startsWith('zh') ? 'zh' : 'en',
 };
 
 export const t = (text) => (language.value === 'zh' && ZH[text]) || text;
