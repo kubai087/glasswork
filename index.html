@@ -16,8 +16,37 @@
   <meta property="og:url" content="https://www.kubai.design/glasswork/">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="https://www.kubai.design/glasswork/media/og.jpg">
-  <link rel="stylesheet" href="./style.css">
-  <link rel="stylesheet" href="./glass.css">
+  <!-- Until the stylesheets arrive, or if one doesn't: the wallpaper covers
+       the window instead of showing at its own size and pushing the page
+       off screen. -->
+  <style>
+    html, body { height: 100%; margin: 0; overflow: hidden; background: #0b0c0e; }
+    .view, .stage, .wall { position: fixed; inset: 0; }
+    .wall > * { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .wall .is-dark { opacity: 0; }
+  </style>
+  <!-- A flaky network can drop a file: a stylesheet that fails is asked for
+       once more, and if the page's script hasn't started after a while,
+       the page reloads once. -->
+  <script>
+    function retryStyle(link) {
+      if (link.dataset.retried) return;
+      var again = link.cloneNode();
+      again.dataset.retried = '1';
+      again.href = link.href.split('?')[0] + '?retry=' + Date.now();
+      link.after(again);
+    }
+    setTimeout(function () {
+      if (document.documentElement.dataset.ready) return;
+      try {
+        if (sessionStorage.getItem('glasswork:reloaded')) return;
+        sessionStorage.setItem('glasswork:reloaded', '1');
+      } catch (e) { return; }
+      location.reload();
+    }, 9000);
+  </script>
+  <link rel="stylesheet" href="./style.css" onerror="retryStyle(this)">
+  <link rel="stylesheet" href="./glass.css" onerror="retryStyle(this)">
 </head>
 <body>
   <main class="view">

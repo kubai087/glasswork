@@ -1112,6 +1112,9 @@ requestAnimationFrame(() => setTimeout(() => {
 }, 0));
 apply();
 translate(document.body);
+// The page is running (index.html reloads once if it never gets here).
+document.documentElement.dataset.ready = '1';
+try { sessionStorage.removeItem('glasswork:reloaded'); } catch {}
 
 // Reset: every setting back to Lumno's, but the scene (theme, wallpaper,
 // motion) stays, and the surfaces go back in place.

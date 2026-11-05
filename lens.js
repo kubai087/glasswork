@@ -298,6 +298,12 @@ function placeFilter(lens, width, height) {
 export function liquidGlass(el, options = {}) {
   let opts = { ...LENS_DEFAULTS, ...options };
   const supported = isLensSupported();
+  let current = null; // { key, lens, width, height }
+  let token = 0;
+  let frame = 0;
+  let lastChange = 0;
+  let settle = 0;
+  let observer = null;
   const api = {
     supported,
     bezel: 0,
@@ -308,13 +314,13 @@ export function liquidGlass(el, options = {}) {
     refresh: () => schedule(),
     destroy,
   };
-  if (!supported) return api;
-
-  let current = null; // { key, lens, width, height }
-  let token = 0;
-  let frame = 0;
-  let lastChange = 0;
-  let settle = 0;
+  if (!supported) {
+    // Nothing to draw: every call is a no-op.
+    api.update = () => {};
+    api.refresh = () => {};
+    api.destroy = () => {};
+    return api;
+  }
 
   function clear() {
     token += 1;
@@ -387,7 +393,7 @@ export function liquidGlass(el, options = {}) {
     if (!frame) frame = requestAnimationFrame(fit);
   }
 
-  const observer = new ResizeObserver(schedule);
+  observer = new ResizeObserver(schedule);
   observer.observe(el);
 
   function destroy() {
