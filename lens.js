@@ -377,6 +377,14 @@ export function liquidGlass(el, options = {}) {
       settle = setTimeout(schedule, SETTLE_MS);
       return;
     }
+    // New tiles can take a few frames; until then the lens in use covers
+    // the new size, so no part of the surface goes without it.
+    if (current && (current.width !== width || current.height !== height)) {
+      placeFilter(current.lens, width, height);
+      current.width = width;
+      current.height = height;
+      setScale(current.lens, bezel);
+    }
     const mine = ++token;
     const tiles = await lensTiles(radius, bezel, corner, opts.power);
     if (mine !== token) return;
