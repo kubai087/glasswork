@@ -46,35 +46,30 @@ const MATERIALS = {
 };
 
 // The wallpapers, in the panel's order: macOS Tahoe's (a video, Apple's),
-// the scenes drawn live (wallpapers.js), videos streamed from Wikimedia
-// Commons, a random photo, and the visitor's own file or link.
+// the scenes drawn live (wallpapers.js), videos from Wikimedia Commons, a
+// random photo, and the visitor's own file or link.
 const WALLPAPERS = {
   Tahoe: 'tahoe', Mesh: 'mesh', Dunes: 'dunes', Aurora: 'aurora', Lava: 'lava', Rings: 'lines', Bokeh: 'bokeh',
   Clouds: 'clouds', Waterfall: 'waterfall', Coast: 'coast', Ocean: 'ocean', 'Random photo': 'photo', 'Your own': 'custom',
 };
 
-// Openly licensed videos on Wikimedia Commons, streamed from there in the
-// size Commons transcodes them to (1080p, or 480p on phones). Commons
-// allows reading them across origins, so the glass can sample them.
-const COMMONS = 'https://upload.wikimedia.org/wikipedia/commons/transcoded/';
+// Openly licensed videos from Wikimedia Commons, trimmed and re-encoded
+// to 720p H.264 and served with the page, so every browser plays them and
+// the glass can always read them. Each is credited while it shows.
 const ONLINE = {
   clouds: {
-    file: 'f/f5/2020-04-03_timelapse-nuages-Belfort.webm/2020-04-03_timelapse-nuages-Belfort.webm',
     author: 'Thomas Bresson', license: 'CC BY 4.0',
     page: 'https://commons.wikimedia.org/wiki/File:2020-04-03_timelapse-nuages-Belfort.webm',
   },
   waterfall: {
-    file: 'a/a0/Athirapally_falls.webm/Athirapally_falls.webm',
     author: 'Shyamal', license: 'CC0',
     page: 'https://commons.wikimedia.org/wiki/File:Athirapally_falls.webm',
   },
   coast: {
-    file: 'e/eb/Northern_Shore_of_Madeira_near_Porto_Moniz.webm/Northern_Shore_of_Madeira_near_Porto_Moniz.webm',
     author: 'Szabolcs Beki', license: 'CC BY 3.0',
     page: 'https://commons.wikimedia.org/wiki/File:Northern_Shore_of_Madeira_near_Porto_Moniz.webm',
   },
   ocean: {
-    file: 'c/c6/Pacific_Ocean_at_Arena_Cove_-_April_2023_-_Sarah_Stierch.webm/Pacific_Ocean_at_Arena_Cove_-_April_2023_-_Sarah_Stierch.webm',
     author: 'Sarah Stierch', license: 'CC BY 4.0',
     page: 'https://commons.wikimedia.org/wiki/File:Pacific_Ocean_at_Arena_Cove_-_April_2023_-_Sarah_Stierch.webm',
   },
@@ -373,7 +368,6 @@ let media = null; // { key, el, video, readable, credit }
 let own = null;
 let previous = 'tahoe';
 const isMedia = (key = state.wallpaper) => Boolean(ONLINE[key]) || key === 'photo' || key === 'custom';
-const phone = () => matchMedia('(max-width: 720px), (pointer: coarse)').matches;
 
 const VIDEO_EXT = /\.(mp4|m4v|webm|mov|ogv|ogg)(\?|#|$)/i;
 
@@ -388,13 +382,14 @@ function dropMedia() {
 // Puts an image or video on the wall, with the loading note while it
 // loads. A remote file is asked for with CORS so the glass can read it;
 // if the host doesn't allow that, it is shown anyway, unread.
-function showMedia(key, { src, video, credit: info, remote, cors = remote, retried = false }) {
+function showMedia(key, { src, poster, video, credit: info, remote, cors = remote, retried = false }) {
   dropMedia();
   const el = document.createElement(video ? 'video' : 'img');
   el.className = 'is-media';
   el.alt = '';
   if (cors) el.crossOrigin = 'anonymous';
   if (video) Object.assign(el, { muted: true, loop: true, playsInline: true, preload: 'auto' });
+  if (poster) el.poster = poster;
   media = { key, el, video, readable: !remote || cors, credit: info };
   const mine = media;
   showNotice(t(video ? 'Loading video…' : 'Loading image…'));
@@ -414,7 +409,7 @@ function showMedia(key, { src, video, credit: info, remote, cors = remote, retri
       // A host can turn a request away for a moment (Commons answers 429
       // when busy), so ask once more; then show it without CORS, which the
       // glass can't read but still shows.
-      const again = { src, video, credit: info, remote, cors: !retried, retried: true };
+      const again = { src, poster, video, credit: info, remote, cors: !retried, retried: true };
       setTimeout(() => media === mine && showMedia(key, again), retried ? 0 : 1200);
       return;
     }
@@ -507,11 +502,11 @@ function syncMedia() {
   if (media?.key === key && (key !== 'custom' || media.el.src === own?.src || media.el.currentSrc === own?.src)) return;
   if (ONLINE[key]) {
     const info = ONLINE[key];
-    const size = phone() ? 480 : 1080;
     showMedia(key, {
-      src: `${COMMONS}${info.file}.${size}p.vp9.webm`,
+      src: `./media/${key}.mp4`,
+      poster: `./media/${key}.jpg`,
       video: true,
-      remote: true,
+      remote: false,
       credit: { text: `${info.author} · ${info.license} · Wikimedia Commons`, href: info.page },
     });
   } else if (key === 'photo') {

@@ -17,6 +17,28 @@ it was designed against. No license to them is granted here; do not reuse or
 redistribute them, and leave them out of anything built on this code. They
 will be removed on request from the rights holder.
 
+The following files are also NOT covered by the MIT License. Each is a
+video from Wikimedia Commons under its own license, cut to at most 30
+seconds, with its sound removed and re-encoded as 720p H.264 (with a JPEG
+of its first frame as a poster), and credited on the page while it plays:
+
+  media/clouds.mp4, media/clouds.jpg
+    "2020-04-03 timelapse-nuages-Belfort.webm" by Thomas Bresson, CC BY 4.0
+    https://commons.wikimedia.org/wiki/File:2020-04-03_timelapse-nuages-Belfort.webm
+  media/waterfall.mp4, media/waterfall.jpg
+    "Athirapally falls.webm" by Shyamal, CC0 1.0
+    https://commons.wikimedia.org/wiki/File:Athirapally_falls.webm
+  media/coast.mp4, media/coast.jpg
+    "Northern Shore of Madeira near Porto Moniz.webm" by Szabolcs Beki, CC BY 3.0
+    https://commons.wikimedia.org/wiki/File:Northern_Shore_of_Madeira_near_Porto_Moniz.webm
+  media/ocean.mp4, media/ocean.jpg
+    "Pacific Ocean at Arena Cove - April 2023 - Sarah Stierch.webm" by Sarah Stierch, CC BY 4.0
+    https://commons.wikimedia.org/wiki/File:Pacific_Ocean_at_Arena_Cove_-_April_2023_-_Sarah_Stierch.webm
+
+  CC BY 4.0: https://creativecommons.org/licenses/by/4.0/
+  CC BY 3.0: https://creativecommons.org/licenses/by/3.0/
+  CC0 1.0:   https://creativecommons.org/publicdomain/zero/1.0/
+
 Glasswork is an independent project and is not affiliated with, endorsed by
 or sponsored by Apple Inc. Apple, macOS, macOS Tahoe and Liquid Glass are
 trademarks of Apple Inc.
@@ -24,12 +46,5 @@ trademarks of Apple Inc.
 Loaded at run time and not part of this repository:
 
 - Tweakpane and @tweakpane/plugin-essentials (MIT License), from jsDelivr.
-- Four videos streamed from Wikimedia Commons, each under its own license
-  and credited on the page while it plays:
-    2020-04-03 timelapse-nuages-Belfort.webm, Thomas Bresson, CC BY 4.0
-    Athirapally falls.webm, Shyamal, CC0
-    Northern Shore of Madeira near Porto Moniz.webm, Szabolcs Beki, CC BY 3.0
-    Pacific Ocean at Arena Cove - April 2023 - Sarah Stierch.webm,
-      Sarah Stierch, CC BY 4.0
 - Random photos from Lorem Picsum (picsum.photos), originally from Unsplash
   under the Unsplash License, with the photographer credited on the page.

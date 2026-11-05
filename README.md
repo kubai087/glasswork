@@ -185,7 +185,7 @@ There aren't many files: `glass.css` is the material, `lens.js` the refraction, 
 
 ## Browsers
 
-Chromium browsers (Chrome, Edge, Arc and so on) show everything. Safari and Firefox can't draw the refraction and fall back to plain CSS glass, which still has the tint, blur and rim light. Corner smoothing needs Chromium 139 or later. The Commons videos are WebM, which older Safari can't play; the page says so and goes back to Tahoe.
+Chromium browsers (Chrome, Edge, Arc and so on) show everything. Safari and Firefox can't draw the refraction and fall back to plain CSS glass, which still has the tint, blur and rim light. Corner smoothing needs Chromium 139 or later.
 
 If you paste a link from a site that doesn't allow cross-origin reads, it still shows, but the glass can't read it, so it uses the theme's ink and a denser tint.
 
@@ -196,6 +196,6 @@ Issues and pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md).
 - The code is [MIT](LICENSE), and so are the images in `media/` that this project rendered.
 - **The Tahoe wallpaper isn't covered by the MIT license.** `tahoe-light.mp4`, `tahoe-dark.mp4`, `tahoe-light.webp` and `tahoe-dark.webp` in `media/` are cut from macOS Tahoe's dynamic wallpaper, © Apple Inc. They're here only so the live demo can show the glass over the wallpaper it was designed on. Please don't reuse them, and remove them from anything you build on this code. I'll take them down if the rights holder asks. See [NOTICE](NOTICE).
 - This is a personal project with no connection to Apple. Apple, macOS, macOS Tahoe and Liquid Glass are trademarks of Apple Inc.; "liquid glass" here means Lumno's own material.
-- The four videos are streamed from Wikimedia Commons and aren't stored in this repo: [Clouds](https://commons.wikimedia.org/wiki/File:2020-04-03_timelapse-nuages-Belfort.webm) by Thomas Bresson (CC BY 4.0), [Waterfall](https://commons.wikimedia.org/wiki/File:Athirapally_falls.webm) by Shyamal (CC0), [Coast](https://commons.wikimedia.org/wiki/File:Northern_Shore_of_Madeira_near_Porto_Moniz.webm) by Szabolcs Beki (CC BY 3.0) and [Ocean](https://commons.wikimedia.org/wiki/File:Pacific_Ocean_at_Arena_Cove_-_April_2023_-_Sarah_Stierch.webm) by Sarah Stierch (CC BY 4.0). The author and license show in the bottom-left corner while one plays.
+- The four videos come from Wikimedia Commons. I cut each to at most 30 seconds, dropped the sound and re-encoded them as 720p MP4 in `media/`; each keeps its own license (not MIT): [Clouds](https://commons.wikimedia.org/wiki/File:2020-04-03_timelapse-nuages-Belfort.webm) by Thomas Bresson (CC BY 4.0), [Waterfall](https://commons.wikimedia.org/wiki/File:Athirapally_falls.webm) by Shyamal (CC0), [Coast](https://commons.wikimedia.org/wiki/File:Northern_Shore_of_Madeira_near_Porto_Moniz.webm) by Szabolcs Beki (CC BY 3.0) and [Ocean](https://commons.wikimedia.org/wiki/File:Pacific_Ocean_at_Arena_Cove_-_April_2023_-_Sarah_Stierch.webm) by Sarah Stierch (CC BY 4.0). The author and license show in the bottom-left corner while one plays.
 - Random photos come from [Lorem Picsum](https://picsum.photos), which serves Unsplash photos under the Unsplash License; the photographer is credited in the corner.
 - The panel is [Tweakpane](https://tweakpane.github.io/docs/), MIT licensed, loaded from jsDelivr.
