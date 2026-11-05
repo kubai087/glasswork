@@ -2,6 +2,8 @@
 
 [English](./README.md)
 
+**在线体验：<https://www.kubai.design/liquid-glass/>**
+
 [Lumno](https://github.com/kubai087/lumno-extension) 新标签页的液态玻璃材质，开源、可调，背景是 macOS Tahoe 的动态壁纸。《Vibe Design Tips》第 010 期拆解了这层材质；在这里可以调它的每一个参数，并复制结果。
 
 用 http 打开 `index.html`（视频和模块无法从 `file://` 加载）：

@@ -2,6 +2,8 @@
 
 [简体中文](./README.zh-CN.md)
 
+**Live: <https://www.kubai.design/liquid-glass/>**
+
 The liquid glass material from [Lumno](https://github.com/kubai087/lumno-extension)'s New Tab page, open and tunable, over macOS Tahoe's dynamic wallpaper. Tip 010 of *Vibe Design Tips* takes the material apart; this page lets you set every part of it and copy the result.
 
 Open `index.html` over http (videos and modules don't load from `file://`):
