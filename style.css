@@ -86,7 +86,7 @@ body[data-ui="off"] { --panel-space: 0px; }
   padding: calc(24 * var(--u));
   padding-right: calc(24 * var(--u) + var(--panel-space));
   /* Room for the toolbar along the bottom. */
-  padding-bottom: calc(96 * var(--u));
+  padding-bottom: calc(24 * var(--u) + 64px);
   pointer-events: none;
 }
 
@@ -290,18 +290,20 @@ body[data-ui="off"] { --panel-space: 0px; }
 
 /* The toolbar: one pill along the bottom of the free space, its buttons
    lit on hover rather than glass of their own (glass on glass doubles the
-   blur). It stays put; the surfaces above it can be dragged. */
+   blur). It is the page's own control, so it keeps a modest size instead
+   of growing with the stage, and stays put while the surfaces above it
+   can be dragged. */
 .toolbar {
-  --b: max(36px, calc(44 * var(--u)));
+  --b: clamp(34px, calc(34 * var(--u)), 40px);
   position: absolute;
   z-index: 3;
   left: calc((100% - var(--panel-space)) / 2);
-  bottom: max(14px, calc(22 * var(--u)));
+  bottom: 16px;
   translate: -50% 0;
   display: flex;
   align-items: center;
   gap: 2px;
-  padding: max(4px, calc(6 * var(--u)));
+  padding: 4px;
   border-radius: 999px;
 }
 
@@ -321,9 +323,9 @@ body[data-ui="off"] { --panel-space: 0px; }
   -webkit-tap-highlight-color: transparent;
 }
 
-.toolbar svg { width: calc(var(--b) * 0.5); height: calc(var(--b) * 0.5); }
-.toolbar a svg { width: calc(var(--b) * 0.44); height: calc(var(--b) * 0.44); }
-.toolbar .sep { width: 1px; height: calc(var(--b) * 0.5); margin: 0 4px; background: var(--well); }
+.toolbar svg { width: 19px; height: 19px; }
+.toolbar a svg { width: 17px; height: 17px; }
+.toolbar .sep { width: 1px; height: 18px; margin: 0 4px; background: var(--well); }
 /* A switch that is off: its icon struck through and dimmed. */
 .toolbar svg .off { display: none; }
 .toolbar [aria-pressed="false"] svg .off { display: inline; }
@@ -562,9 +564,10 @@ body[data-ui="off"] .sidebar { display: none; }
     box-shadow: none;
   }
 
-  .surfaces { padding-bottom: max(60px, calc(80 * var(--u))); }
-  body[data-ui="off"] .surfaces { padding-bottom: calc(max(60px, 80 * var(--u)) + env(safe-area-inset-bottom)); }
-  body[data-ui="off"] .toolbar { bottom: calc(max(14px, 22 * var(--u)) + env(safe-area-inset-bottom)); }
+  .surfaces { padding-bottom: 72px; }
+  body[data-ui="off"] .surfaces { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  body[data-ui="off"] .toolbar { bottom: calc(14px + env(safe-area-inset-bottom)); }
+  .toolbar { bottom: 12px; }
   .toolbar .sep { margin: 0 2px; }
   .credit { top: 10px; bottom: auto; max-width: 70%; }
   .notice { top: 34px; }
