@@ -19,13 +19,14 @@ document.body.append(panel);
 
 const style = document.createElement('style');
 document.head.append(style);
-const switches = { blur: true, blend: true, video: true, transitions: true };
+const switches = { blur: true, blend: true, video: true, transitions: true, rim: true };
 function restyle() {
   style.textContent = [
     switches.blur ? '' : '.glass::before { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }',
     switches.blend ? '' : '.glass * { mix-blend-mode: normal !important; }',
     switches.video ? '' : '.wall video { display: none !important; }',
-    switches.transitions ? '' : '.glass { transition: none !important; }',
+    switches.transitions ? '' : '.glass, .glass::after { transition: none !important; }',
+    switches.rim ? '' : '.glass::after { box-shadow: none !important; }',
   ].join('\n');
 }
 for (const key of Object.keys(switches)) {
@@ -52,7 +53,11 @@ function report() {
   ];
   for (const el of document.querySelectorAll('.glass')) {
     const r = el.getBoundingClientRect();
-    lines.push(`${el.dataset.surface} ${Math.round(r.x)},${Math.round(r.y)} ${Math.round(r.width)}x${Math.round(r.height)} op ${css(el, 'opacity')} vis ${css(el, 'visibility')} kind ${el.dataset.kind} bg ${css(el, 'background-color')} bf ${css(el, '-webkit-backdrop-filter').slice(0, 60)}`);
+    const before = getComputedStyle(el, '::before');
+    const after = getComputedStyle(el, '::after');
+    lines.push(`${el.dataset.surface} ${Math.round(r.x)},${Math.round(r.y)} ${Math.round(r.width)}x${Math.round(r.height)} kind ${el.dataset.kind} z ${css(el, 'z-index')} pos ${css(el, 'position')}`);
+    lines.push(`  ::before ${before.content} ${before.position} ${before.width}x${before.height} bg ${before.backgroundColor} bf ${(before.webkitBackdropFilter || before.backdropFilter || '').slice(0, 50)}`);
+    lines.push(`  ::after ${after.content} shadow ${after.boxShadow.slice(0, 40)}`);
   }
   const card = document.querySelector('.player');
   if (card) lines.push(`player kids ${[...card.querySelectorAll('*')].length} first ${card.firstElementChild?.className} html ${card.innerHTML.length}`);
