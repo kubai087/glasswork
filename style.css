@@ -1,0 +1,434 @@
+/*
+ * The page: the stage on the left, the settings docked on the right (a
+ * sheet under the stage on phones), as in PRO Threads. The material itself
+ * is in glass.css.
+ */
+
+@property --u { syntax: '<length>'; inherits: true; initial-value: 1px; }
+
+:root {
+  --panel-w: 300px;
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Helvetica Neue', 'PingFang SC', sans-serif;
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #0b0c0e;
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+body[data-ui="off"] { --panel-w: 0px; }
+
+/* The space left of the panel. */
+.view {
+  position: fixed;
+  inset: 0 var(--panel-w) 0 0;
+  container-type: size;
+  overflow: hidden;
+}
+
+/* One Lumno pixel at the stage's size: the surfaces keep their proportions
+   from a phone with the settings up to a large display. */
+.stage {
+  --u: clamp(0.56px, min(100cqw / 760, 100cqh / 640), 1.5px);
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #6f8fc4;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ---------- The wallpaper ---------- */
+
+.wall {
+  position: absolute;
+  inset: 0;
+}
+
+.wall > * {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.wall .is-dark { opacity: 0; transition: opacity 620ms ease; }
+.stage[data-theme="dark"] .wall .is-dark { opacity: 1; }
+.wall .is-custom { z-index: 1; }
+
+/* ---------- The surfaces ---------- */
+
+.surfaces {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(22 * var(--u));
+  padding: calc(24 * var(--u));
+  pointer-events: none;
+}
+
+.surfaces > * {
+  pointer-events: auto;
+  translate: var(--dx, 0px) var(--dy, 0px);
+  touch-action: none;
+  cursor: grab;
+}
+
+.surfaces > [data-dragging] { cursor: grabbing; }
+
+.surfaces svg {
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.surfaces svg .fill { fill: currentColor; stroke: none; }
+
+.surfaces button {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Search: a pill with a field in it. */
+.search {
+  display: flex;
+  align-items: center;
+  gap: calc(10 * var(--u));
+  box-sizing: border-box;
+  width: min(calc(440 * var(--u)), 100%);
+  height: calc(52 * var(--u));
+  padding: 0 calc(18 * var(--u));
+}
+
+.search svg { flex: none; width: calc(20 * var(--u)); height: calc(20 * var(--u)); }
+
+.search input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: var(--ink);
+  font: 500 calc(16 * var(--u)) / 1 var(--font);
+  cursor: text;
+  user-select: text;
+}
+
+.search input::placeholder { color: var(--ink-2); }
+
+.search kbd {
+  flex: none;
+  font: 500 calc(12 * var(--u)) / 1 var(--font);
+  letter-spacing: 0.04em;
+}
+
+/* Now playing: one slab of glass. */
+.player {
+  box-sizing: border-box;
+  width: min(calc(340 * var(--u)), 100%);
+  padding: calc(18 * var(--u)) calc(18 * var(--u)) calc(14 * var(--u));
+}
+
+.p-top { display: flex; align-items: center; gap: calc(14 * var(--u)); }
+
+.p-art {
+  flex: none;
+  width: calc(64 * var(--u));
+  height: calc(64 * var(--u));
+  border-radius: calc(14 * var(--u));
+  corner-shape: superellipse(var(--corner-k, 1));
+  background:
+    radial-gradient(120% 90% at 20% 15%, #ffd6a8 0%, transparent 55%),
+    radial-gradient(100% 80% at 85% 80%, #5a7cff 0%, transparent 60%),
+    linear-gradient(140deg, #ff7a8a, #8a5cff 55%, #2bc4ff);
+  box-shadow: 0 calc(4 * var(--u)) calc(12 * var(--u)) rgb(0 0 0 / 0.16);
+}
+
+.p-track { display: grid; gap: calc(3 * var(--u)); min-width: 0; }
+.p-track b { font: 600 calc(17 * var(--u)) / 1.2 var(--font); }
+.p-track span { font: 500 calc(14 * var(--u)) / 1.2 var(--font); }
+
+.p-time {
+  display: flex;
+  justify-content: space-between;
+  margin-top: calc(16 * var(--u));
+  font: 500 calc(11 * var(--u)) / 1 var(--font);
+  font-variant-numeric: tabular-nums;
+}
+
+.p-progress {
+  position: relative;
+  display: block;
+  height: calc(5 * var(--u));
+  margin-top: calc(7 * var(--u));
+  border-radius: 99px;
+  background: var(--well);
+  overflow: hidden;
+}
+
+.p-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: calc(var(--progress, 0) * 100%);
+  border-radius: inherit;
+  background: var(--ink-solid);
+  opacity: var(--ink-a);
+}
+
+.p-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(34 * var(--u));
+  margin-top: calc(10 * var(--u));
+}
+
+.p-side svg { width: calc(26 * var(--u)); height: calc(26 * var(--u)); }
+.p-main svg { width: calc(36 * var(--u)); height: calc(36 * var(--u)); }
+.p-controls button { border-radius: 50%; padding: calc(4 * var(--u)); }
+.p-main .is-play { display: none; }
+.stage[data-paused] .p-main .is-play { display: block; }
+.stage[data-paused] .p-main .is-pause { display: none; }
+
+/* The tint control. */
+.tint {
+  display: flex;
+  align-items: center;
+  gap: calc(12 * var(--u));
+  box-sizing: border-box;
+  width: min(calc(300 * var(--u)), 100%);
+  height: calc(48 * var(--u));
+  padding: 0 calc(18 * var(--u));
+}
+
+.tint-label { font: 600 calc(14 * var(--u)) / 1 var(--font); }
+
+.tint-value {
+  min-width: 3.2em;
+  text-align: right;
+  font: 600 calc(13 * var(--u)) / 1 var(--font);
+  font-variant-numeric: tabular-nums;
+}
+
+.tint-range {
+  --p: 66.6%;
+  flex: 1;
+  min-width: 0;
+  height: calc(28 * var(--u));
+  margin: 0;
+  background: none;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.tint-range::-webkit-slider-runnable-track {
+  height: calc(6 * var(--u));
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--ink-solid) var(--p), var(--well) var(--p));
+}
+
+.tint-range::-moz-range-track {
+  height: calc(6 * var(--u));
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--ink-solid) var(--p), var(--well) var(--p));
+}
+
+.tint-range::-webkit-slider-thumb {
+  width: calc(24 * var(--u));
+  height: calc(24 * var(--u));
+  margin-top: calc(-9 * var(--u));
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.08), 0 calc(2 * var(--u)) calc(6 * var(--u)) rgb(0 0 0 / 0.2);
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.tint-range::-moz-range-thumb {
+  width: calc(24 * var(--u));
+  height: calc(24 * var(--u));
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 0.5px rgb(0 0 0 / 0.08), 0 calc(2 * var(--u)) calc(6 * var(--u)) rgb(0 0 0 / 0.2);
+}
+
+/* The toolbar: one pill, its buttons lit on hover rather than glass of
+   their own (glass on glass doubles the blur). */
+.toolbar {
+  display: flex;
+  gap: calc(4 * var(--u));
+  padding: calc(6 * var(--u));
+}
+
+.toolbar button {
+  width: calc(44 * var(--u));
+  height: calc(44 * var(--u));
+  border-radius: 50%;
+  transition: background-color 160ms ease;
+}
+
+.toolbar button svg { width: calc(22 * var(--u)); height: calc(22 * var(--u)); }
+.toolbar button[aria-pressed="false"] { opacity: 0.45; }
+.toolbar .moon { display: none; }
+.stage[data-theme="dark"] .toolbar .sun { display: none; }
+.stage[data-theme="dark"] .toolbar .moon { display: block; }
+
+@media (hover: hover) {
+  .surfaces button:hover { background-color: var(--row-hover); }
+}
+
+.surfaces button:active { background-color: var(--row-active); }
+.surfaces button:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+
+/* ---------- The settings ---------- */
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--panel-w);
+  box-sizing: border-box;
+  padding: 12px;
+  overflow-y: auto;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  background: #111215;
+  scrollbar-width: thin;
+  scrollbar-gutter: stable;
+}
+
+body[data-ui="off"] .sidebar { display: none; }
+
+.sidebar .tp-rotv {
+  --tp-base-background-color: #1a1c21;
+  --tp-container-background-color: rgba(255, 255, 255, 0.06);
+  --tp-input-background-color: rgba(255, 255, 255, 0.07);
+  --tp-label-foreground-color: #a8aebb;
+  --tp-monitor-background-color: rgba(0, 0, 0, 0.35);
+  --cnt-usz: 22px;
+  font-size: 12px;
+}
+
+/* ---------- The code ---------- */
+
+.code-dialog {
+  box-sizing: border-box;
+  width: min(720px, calc(100vw - 32px));
+  max-height: min(80dvh, 760px);
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  background: #16171b;
+  color: #c9ced8;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  font: 13px / 1.5 var(--font);
+}
+
+.code-dialog[open] { display: flex; flex-direction: column; }
+.code-dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
+
+.code-dialog header {
+  display: grid;
+  gap: 4px;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.code-dialog header b { color: #fff; font-size: 15px; }
+.code-note { color: #8a909c; }
+
+.code-dialog pre {
+  flex: 1;
+  margin: 0;
+  padding: 14px 18px;
+  overflow: auto;
+  color: #dfe3ea;
+  font: 12px / 1.6 ui-monospace, 'SF Mono', Menlo, monospace;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.code-dialog footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 18px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.code-dialog button {
+  min-width: 76px;
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #e6e9ef;
+  font: 500 13px / 1 var(--font);
+  cursor: pointer;
+}
+
+.code-dialog button[data-action="copy"] { border-color: transparent; background: #e6e9ef; color: #111215; }
+
+/* ---------- Phones ---------- */
+
+/* The stage on top, the settings in a sheet below it. The settings start
+   folded away; the toolbar's last button brings them up. */
+@media (max-width: 720px) {
+  :root {
+    --panel-w: 0px;
+    --sheet-h: min(52dvh, 480px);
+  }
+
+  /* A phone is narrow, so the surfaces size to its width. */
+  .stage { --u: clamp(0.56px, min(100cqw / 420, 100cqh / 600), 1.2px); }
+
+  body[data-ui="off"] { --sheet-h: 0px; }
+
+  .view { inset: 0 0 var(--sheet-h) 0; }
+
+  .sidebar {
+    top: auto;
+    left: 0;
+    width: auto;
+    height: var(--sheet-h);
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 0;
+    overscroll-behavior: contain;
+  }
+
+  .surfaces { padding-bottom: calc(24 * var(--u) + env(safe-area-inset-bottom)); }
+  body:not([data-ui="off"]) .surfaces { padding-bottom: calc(24 * var(--u)); }
+}
+
+@media (pointer: coarse) {
+  .sidebar .tp-rotv { --cnt-usz: 30px; font-size: 13px; }
+  .sidebar input { font-size: 16px; }
+  /* The page doesn't zoom in on the search field. */
+  .search input { font-size: max(16px, calc(16 * var(--u))); }
+}
