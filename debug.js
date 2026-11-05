@@ -54,6 +54,8 @@ function report() {
     const r = el.getBoundingClientRect();
     lines.push(`${el.dataset.surface} ${Math.round(r.x)},${Math.round(r.y)} ${Math.round(r.width)}x${Math.round(r.height)} op ${css(el, 'opacity')} vis ${css(el, 'visibility')} kind ${el.dataset.kind} bg ${css(el, 'background-color')} bf ${css(el, '-webkit-backdrop-filter').slice(0, 60)}`);
   }
+  const card = document.querySelector('.player');
+  if (card) lines.push(`player kids ${[...card.querySelectorAll('*')].length} first ${card.firstElementChild?.className} html ${card.innerHTML.length}`);
   const video = document.querySelector('.wall .is-light');
   lines.push(`tahoe video rs ${video.readyState} paused ${video.paused}`);
   lines.push(`errors: ${(window.__errors || []).join(' | ') || 'none'}`);

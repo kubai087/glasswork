@@ -152,5 +152,16 @@
   </dialog>
 
   <script type="module" src="./playground.js"></script>
+  <!-- ?debug=1: a panel for checking the page on a phone. Loaded from here,
+       fresh each time, so a cached copy of the page's scripts can't keep it
+       out. -->
+  <script>
+    if (/[?&]debug\b/.test(location.search)) {
+      var debug = document.createElement('script');
+      debug.type = 'module';
+      debug.src = './debug.js?v=' + Date.now();
+      document.body.append(debug);
+    }
+  </script>
 </body>
 </html>

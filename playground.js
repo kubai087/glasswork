@@ -819,8 +819,9 @@ const timeLeft = $('[data-time="left"]');
 const clock = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 let shown = '';
 
-// The bar moves by its own translate, so a new position restyles only the
-// bar, not the whole card.
+// The bar's own width moves, so a new position restyles only the bar, not
+// the whole card. (A translate would give it a compositing layer of its
+// own inside the blended, blurred card, which iOS can fail to draw.)
 const progressFill = $('.p-fill', player);
 let shownProgress = -1;
 
@@ -832,7 +833,7 @@ function tick() {
     const progress = Math.round((now / total) * 1000) / 1000;
     if (progress !== shownProgress) {
       shownProgress = progress;
-      progressFill.style.translate = `${((progress - 1) * 100).toFixed(1)}% 0`;
+      progressFill.style.width = `${(progress * 100).toFixed(1)}%`;
     }
     const text = `${clock(now)} -${clock(Math.max(0, total - now))}`;
     if (text !== shown) {
@@ -1112,8 +1113,6 @@ requestAnimationFrame(() => setTimeout(() => {
 }, 0));
 apply();
 translate(document.body);
-// ?debug=1 adds a panel for checking the page on a phone (debug.js).
-if (params.has('debug')) import('./debug.js');
 // The page is running (index.html reloads once if it never gets here).
 document.documentElement.dataset.ready = '1';
 try { sessionStorage.removeItem('glasswork:reloaded'); } catch {}
