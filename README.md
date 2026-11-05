@@ -2,131 +2,56 @@
 
 **English** · [简体中文](README.zh-CN.md)
 
-**A liquid glass material you can take apart, tune and take home.** Glasswork is the glass from [Lumno](https://github.com/kubai087/lumno-extension)'s New Tab page, opened up as a live playground: a thin tint that takes its color from behind, a 2px blur that keeps the scene vivid, a thick rim that bends the wallpaper inward and splits it into colors, rim light and a bevel, and ink that reads the wallpaper under each surface to stay legible. Every part is on a panel, every setting is in the URL, and **Copy CSS** hands you the result.
+The liquid glass from Lumno's New Tab page, pulled out into a playground you can tune. Tint, blur, the refracting rim, rim light and text color each have their own controls, and once it looks right, **Copy CSS** gives you the code.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![No build step](https://img.shields.io/badge/build-none-brightgreen.svg)](#run-it-locally)
-[![Refraction: Chromium](https://img.shields.io/badge/refraction-Chromium-4285f4.svg)](#browser-support)
+[![Refraction: Chromium](https://img.shields.io/badge/refraction-Chromium-4285f4.svg)](#browsers)
 [![Live demo](https://img.shields.io/badge/demo-live-black.svg)](https://www.kubai.design/glasswork/)
 
-![The playground: glass search bar, player, tint control and toolbar over the Dunes wallpaper, with the settings panel](media/preview.jpg)
+![Glass search bar, player, tint slider and toolbar over the Dunes wallpaper, with the settings panel on the right](media/preview.jpg)
 
-**[Open the playground](https://www.kubai.design/glasswork/)** · [How the material works](#how-the-material-works) · [Use it in your product](#use-it-in-your-product) · [The prompt](#the-prompt) · [URL parameters](#settings-and-url-parameters)
+**[Open the playground](https://www.kubai.design/glasswork/)** · [The original post on X](https://x.com/Kubai087/status/2117782193108082923) · [The prompt](#use-it-in-your-own-product)
 
-## Contents
+## What's in it
 
-- [Features](#features)
-- [Gallery](#gallery)
-- [How the material works](#how-the-material-works)
-- [Use it in your product](#use-it-in-your-product)
-- [The prompt](#the-prompt)
-- [Settings and URL parameters](#settings-and-url-parameters)
-- [Keyboard shortcuts](#keyboard-shortcuts)
-- [Run it locally](#run-it-locally)
-- [Project structure](#project-structure)
-- [Browser support](#browser-support)
-- [Performance](#performance)
-- [Contributing](#contributing)
-- [Credits, trademarks and the Tahoe wallpaper](#credits-trademarks-and-the-tahoe-wallpaper)
-- [License](#license)
+- Separate settings for light glass and dark glass: tint color and strength, blur, saturation, brightness, contrast, rim light, bevel and shadow.
+- The refracting rim, with its width, edge offset, falloff and color split. Corner smoothing too, and the refraction follows the corner shape.
+- Glass that looks at what's behind it. Busier wallpaper gets a denser tint, and text stays at 4.5:1 contrast.
+- macOS Tahoe's dynamic wallpaper plus six animated wallpapers I drew in WebGL, each with a light and a dark version. You can also drop in your own image or video; it's opened in your browser and never uploaded.
+- The search bar, player and tint slider can be dragged around the wallpaper. Double-click to put one back.
+- Presets (Lumno, Clear glass, Frosted, Thick slab, Vivid) change only the material and the refraction, so your colors and theme stay put.
+- Every setting lives in the URL. Send someone the link and they see the same glass.
 
-## Features
+![The six animated wallpapers, light and dark](media/wallpapers.jpg)
 
-- **The whole material on a panel.** For light glass and dark glass each: tint color with swatches, tint opacity (0–150%), the thin and dense ends of the tint, blur, saturation, brightness, contrast, rim light, bevel and shadow.
-- **A refracting thick rim.** An SVG displacement map bends the wallpaper behind the rim inward like the edge of a glass slab and splits it into colors. Rim width, how far the edge bends, falloff and color split are all adjustable, and the map follows CSS `corner-shape: superellipse()` corners.
-- **Glass that reads its wallpaper.** Each surface samples the wallpaper under it a few times a second: the tint grows denser over busy or similar-toned patches, a vivid patch keeps less of the saturation boost, and a legibility floor keeps body text at 4.5:1. Ink can follow the theme (the default), follow the wallpaper per surface, or be held dark or light.
-- **Seven moving wallpapers.** macOS Tahoe's dynamic wallpaper, and six scenes drawn live in WebGL with a light and a dark look each: Mesh, Dunes, Aurora, Lava, Rings and Bokeh. Or drop in an image or video of your own; it never leaves your browser.
-- **Presets.** Lumno, Clear glass, Frosted, Thick slab and Vivid. A preset sets the material's body and refraction only; your tint, opacity, theme, ink, wallpaper and shape stay as you set them.
-- **Real surfaces.** A search bar, a now-playing card, a tint slider and a toolbar. Drag any of the first three across the wallpaper (double-click puts it back); the player's buttons drive the wallpaper.
-- **Copy CSS.** The material at the settings you see, as plain CSS for light and dark glass, with the one script tag the rim lens needs.
-- **Settings in the URL.** Only what differs from the chosen preset is written, so a link opens the same glass.
-- **Phones.** The stage fills the screen and the settings open as a sheet from the toolbar.
-- **English or Simplified Chinese** (`?lang=zh`).
+## How the glass works
 
-## Gallery
+The component itself doesn't change. Only four declarations do: `background`, `backdrop-filter`, `box-shadow` and `color`. Underneath, the glass is six layers:
 
-The six live wallpapers, light and dark, under Lumno's default glass:
+1. **Shadow** gives the card its volume.
+2. **Blur and lift.** The background is blurred by only 2px, then saturated and brightened, so the glass looks clear instead of milky. Dark glass dims the background instead, so it doesn't turn gray.
+3. **Rim refraction.** An SVG displacement map pushes the background near the edge inward, hardest at the very edge and flat in the middle. Red bends a little more than blue, which gives the colored fringe.
+4. **Tint**, a thin layer of color whose opacity follows how busy the background is.
+5. **Rim light**, one line at the top left and one at the bottom right, plus a softer one set inside the edge.
+6. **Text color.** Text is multiplied onto light glass and added onto dark glass, so it picks up a little of the background instead of sitting on top as flat color.
 
-![Mesh, Dunes, Aurora, Lava, Rings and Bokeh, each in its light and dark look, under the glass surfaces](media/wallpapers.jpg)
+Each surface also reads 15 points of the wallpaper behind it and averages their brightness. With ink set to Auto, anything under 0.5 switches to dark glass with light text.
 
-The rim up close: the scene folds back on itself at the very edge and fringes into colors, while the middle stays flat.
+![The player card over the Rings wallpaper, its edge folding the stripes inward with a colored fringe](media/refraction.jpg)
 
-![The player card over the Rings wallpaper, its rim bending the stripes inward with a red and blue fringe](media/refraction.jpg)
-
-Dark glass, and on a phone:
-
-![The surfaces as dark glass over the Aurora wallpaper](media/dark.jpg)
-
-![Three phone screens: the Mesh wallpaper, the settings sheet open, and dark glass over Bokeh](media/phone.jpg)
-
-## How the material works
-
-A surface becomes glass by trading four declarations, `background`, `backdrop-filter`, `box-shadow` and `color`, for the material's tokens; its markup and layout stay as they are. Under those four sit six layers and one decision:
-
-1. **Shadow.** A soft drop shadow and a hairline outline give the slab its volume.
-2. **Blur and tone.** Only 2px of blur, then saturation and, inside the filter, a lift (light glass) or a dim (dark glass), so the glass stays clear and vivid instead of milky or muddy.
-3. **Rim refraction.** An SVG displacement map pushes the scene behind the rim inward, hardest at the edge and fading to a flat middle: a point *d* from the edge looks inward by `edge × rim × (1 − d / rim) ^ falloff`. Red bends a little further than blue, so the rim fringes into colors.
-4. **Tint.** A thin wash whose opacity moves between a thin and a dense end with how busy the wallpaper behind it is, never below what its text needs.
-5. **Rim light.** A highlight along the top left and a fainter one along the bottom right, with a soft bevel just inside the edge.
-6. **Ink.** One color in two opacities: multiplied into light glass and added (plus-lighter) onto dark glass, so text picks up a little of the scene's color.
-7. **Reading the wallpaper.** Each surface samples a 5 × 3 grid under it, drops the two darkest and two brightest points and averages the rest. In Auto ink, a luminance under 0.5 turns the surface to dark glass with light ink.
-
-Recommended values (Lumno's defaults):
+The values Lumno uses:
 
 | | Tint | Blur | Saturation | Brightness |
 | --- | --- | --- | --- | --- |
-| Light glass | white, 6%–22% | 2px | 180% | 1.06 |
-| Dark glass | rgb(30 30 34), 16%–38% | 2px | 160% | 0.8 |
-| Refraction | rim 40–44px, edge 1.1 × rim, falloff 2.6, color split ±15% | | | |
+| Light | white, 6%–22% | 2px | 180% | 1.06 |
+| Dark | rgb(30 30 34), 16%–38% | 2px | 160% | 0.8 |
 
-## Use it in your product
+Refraction: a 40–44px rim, an edge offset of 1.1× the rim, falloff 2.6, color split ±15%.
 
-### Copy the CSS
+## Use it in your own product
 
-Set the glass up in the playground and press **Copy CSS** (the `</>` button). You get the four declarations for light glass (`.glass`) and dark glass (`.glass.is-dark`), with your numbers baked in:
-
-```css
-.glass {
-  background: rgb(255 255 255 / 0.12);
-  -webkit-backdrop-filter: blur(2px) saturate(180%) brightness(1.06);
-  backdrop-filter: blur(2px) saturate(180%) brightness(1.06) var(--glass-lens,);
-  box-shadow: /* rim light, outline, shadow and bevel */;
-  color: rgb(0 0 0 / 0.86);
-}
-.glass > * { mix-blend-mode: multiply; }
-```
-
-`glass.css` in this repository is the same material written as tokens, if you'd rather adapt it by hand.
-
-### Add the rim lens
-
-The refraction is a small module, `lens.js`, with no dependencies:
-
-```html
-<script type="module">
-  import { liquidGlass } from 'https://cdn.jsdelivr.net/gh/kubai087/glasswork@main/lens.js';
-  for (const el of document.querySelectorAll('.glass')) {
-    liquidGlass(el, { rim: 40, edge: 1.1, power: 2.6, dispersion: 0.15 });
-  }
-</script>
-```
-
-| Option | Default | |
-| --- | --- | --- |
-| `rim` | `40` | The widest the rim gets, in CSS pixels. A small surface narrows it to a 3.5th of its short side. |
-| `edge` | `1.1` | How far inward the very edge samples the scene, in rim widths. |
-| `power` | `2.6` | How fast the bend falls off across the rim. |
-| `dispersion` | `0.15` | How much further red bends than blue; `0` for a single pass. |
-| `radius`, `corner` | from CSS | The corner radius in pixels and its superellipse exponent. |
-| `enabled` | `true` | Turns the lens off without removing it. |
-
-It returns `{ supported, update(options), refresh(), destroy() }`. The element must end its `backdrop-filter` with `var(--glass-lens,)`; the lens fits itself as the element resizes. Only Chromium draws `url()` in `backdrop-filter`; elsewhere `liquidGlass` does nothing and the CSS glass stays as it is. For a version pinned to a release, use `@v1.0.0` in place of `@main`.
-
-`adapt.js` holds the wallpaper sampling, the ink decision, the tint density and the legibility floor, if you want surfaces that read what is behind them.
-
-## The prompt
-
-The material was published as tip 010 of *999 small tips that make what you vibe-code feel better made* ([the post on X](https://x.com/Kubai087/status/2117782193108082923)), with a prompt you can give an AI coding assistant to put the same glass on your own product. It is reproduced here in full.
+The quickest way is to hand this prompt to an AI coding tool like Claude Code or Cursor. It changes the material of your existing components and leaves the layout alone. It's the one from the original post.
 
 <details>
 <summary><b>Show the prompt</b></summary>
@@ -196,39 +121,55 @@ Hover brightens the tint by about 14% instead of lifting a shadow.
 
 </details>
 
-## Settings and URL parameters
+To do it by hand, tune the glass in the playground and press `</>` in the toolbar. You get CSS for light glass (`.glass`) and dark glass (`.glass.is-dark`) with your values in it. `glass.css` in this repo is the same material written as variables.
 
-Every setting is kept in the address, only where it differs from the chosen preset, so a reload or a shared link opens the same glass. Any of them can also be given by hand, for example `?wallpaper=aurora&theme=dark&rim=56`.
+The refraction needs one small script with no dependencies:
+
+```html
+<script type="module">
+  import { liquidGlass } from 'https://cdn.jsdelivr.net/gh/kubai087/glasswork@v1.0.0/lens.js';
+  for (const el of document.querySelectorAll('.glass')) {
+    liquidGlass(el, { rim: 40, edge: 1.1, power: 2.6, dispersion: 0.15 });
+  }
+</script>
+```
+
+End the element's `backdrop-filter` with `var(--glass-lens,)`. The script fills that variable in and keeps it fitted when the element resizes.
+
+| Option | Default | |
+| --- | --- | --- |
+| `rim` | `40` | Maximum rim width in px. Small elements shrink it to 1/3.5 of their short side |
+| `edge` | `1.1` | How far the outer edge shifts inward, in rim widths |
+| `power` | `2.6` | How quickly the bend fades toward the middle |
+| `dispersion` | `0.15` | How much more red bends than blue; `0` for no color split |
+| `radius`, `corner` | from CSS | Corner radius and shape; usually leave these out |
+| `enabled` | `true` | Turn the refraction off for now |
+
+It returns `update(options)`, `refresh()` and `destroy()`. If you also want the glass to change tone and density with the background, see `adapt.js`.
+
+## URL parameters
+
+The URL only keeps what differs from the current preset. You can also write one by hand, like `?wallpaper=aurora&theme=dark&rim=56`.
 
 | Parameter | Values | |
 | --- | --- | --- |
-| `preset` | `lumno`, `clear-glass`, `frosted`, `thick-slab`, `vivid` | Where the other values start from |
-| `theme` | `light` (default), `dark` | |
-| `wallpaper` | `tahoe` (default), `mesh`, `dunes`, `aurora`, `lava`, `lines` (Rings), `bokeh` | |
-| `speed`, `paused` | `0`–`3`; `0` or `1` | The wallpaper's motion |
-| `ink` | `theme` (default), `auto`, `dark`, `light` | `auto` reads the wallpaper under each surface |
-| `autoDensity`, `density` | `0` or `1`; `0`–`1` | Tint density from the wallpaper, or set by hand |
-| `legible`, `threshold` | `0` or `1`; `0.2`–`0.8` | The legibility floor; where Auto ink turns light |
-| `lens`, `rim`, `edge`, `power`, `dispersion` | `0` or `1`; `4`–`96`; `0`–`2.5`; `1`–`6`; `0`–`0.4` | The rim lens |
-| `radius`, `smoothing` | `0`–`60`; `0.5`–`3` | Corner radius and superellipse smoothing |
-| `l.<key>`, `d.<key>` | | Light and dark glass: `tint` (hex), `opacity` (`0`–`1.5`), `thin`, `dense`, `blur`, `saturation`, `brightness`, `contrast`, `rimLight`, `bevel`, `shadow` |
-| `lang` | `en` (default), `zh` | The panel's language |
-| `ui` | `0` or `1` | Start with the panel hidden or shown |
+| `preset` | `lumno`, `clear-glass`, `frosted`, `thick-slab`, `vivid` | Preset |
+| `theme` | `light` (default), `dark` | Theme |
+| `wallpaper` | `tahoe` (default), `mesh`, `dunes`, `aurora`, `lava`, `lines`, `bokeh` | Wallpaper |
+| `speed`, `paused` | `0`–`3`; `0` / `1` | Wallpaper speed, pause |
+| `ink` | `theme` (default), `auto`, `dark`, `light` | Text color; `auto` follows the wallpaper |
+| `autoDensity`, `density` | `0` / `1`; `0`–`1` | Tint density, automatic or set by hand |
+| `legible`, `threshold` | `0` / `1`; `0.2`–`0.8` | Keep text legible; where Auto ink switches |
+| `lens`, `rim`, `edge`, `power`, `dispersion` | `0` / `1`; `4`–`96`; `0`–`2.5`; `1`–`6`; `0`–`0.4` | Refraction |
+| `radius`, `smoothing` | `0`–`60`; `0.5`–`3` | Corner radius and smoothing |
+| `l.<key>`, `d.<key>` | | One value of light or dark glass: `tint`, `opacity`, `thin`, `dense`, `blur`, `saturation`, `brightness`, `contrast`, `rimLight`, `bevel`, `shadow` |
+| `lang`, `ui` | `zh`; `0` / `1` | Chinese panel; start with the panel closed |
 
-## Keyboard shortcuts
-
-| Key | |
-| --- | --- |
-| `H` | Show or hide the panel |
-| `T` | Light or dark theme |
-| `W` | Next wallpaper |
-| `Space` | Pause or play the wallpaper |
-
-Double-click a surface to put it back where it started. The toolbar's buttons show their shortcut on hover.
+Shortcuts: `H` panel, `T` light/dark, `W` next wallpaper, Space to pause. The toolbar shows them on hover.
 
 ## Run it locally
 
-There is no build step and nothing to install. Serve the folder over HTTP (ES modules and the videos don't load from `file://`):
+No dependencies and no build step. Any static server works:
 
 ```bash
 git clone https://github.com/kubai087/glasswork.git
@@ -236,52 +177,19 @@ cd glasswork
 python3 -m http.server 8000
 ```
 
-Then open <http://localhost:8000>. In the browser console, `window.__glass` holds the `state`, the `materials`, the `pane` and `apply()`.
+Open <http://localhost:8000>. `window.__glass` in the console is there for debugging.
 
-## Project structure
+There aren't many files: `glass.css` is the material, `lens.js` the refraction, `adapt.js` reads the wallpaper, `wallpapers.js` draws the six wallpapers, and `playground.js` runs the panel and the page.
 
-```
-index.html      the page: the stage, the four glass surfaces, the panel and the Copy CSS dialog
-glass.css       the material, as tokens: two materials and the four declarations
-lens.js         the rim lens, a standalone module
-adapt.js        sampling the wallpaper: ink, tint density, saturation and the legibility floor
-wallpapers.js   the six wallpapers drawn live in WebGL 2
-playground.js   settings, presets, the URL, dragging, the toolbar and Copy CSS
-panel.js        loads Tweakpane from jsDelivr, with a stand-in if it can't
-i18n.js         English and Simplified Chinese
-style.css       the page's layout and the surfaces' own styles
-media/          README images, and the Tahoe videos (see below)
-```
+## Browsers
 
-## Browser support
+Chromium browsers (Chrome, Edge, Arc and so on) show everything. Safari and Firefox can't draw the refraction and fall back to plain CSS glass, which still has the tint, blur and rim light. Corner smoothing needs Chromium 139 or later.
 
-| | Glass | Rim refraction | Live wallpapers |
-| --- | --- | --- | --- |
-| Chrome, Edge, Arc, Brave and other Chromium browsers | ✓ | ✓ | ✓ |
-| Safari (macOS and iOS), every browser on iOS | ✓ | — | ✓ |
-| Firefox | ✓ | — | ✓ |
+Issues and pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Without refraction the glass keeps its tint, blur, rim light and ink. Corner smoothing needs CSS `corner-shape` (Chromium 139+); elsewhere corners are round. Without WebGL 2, the live wallpapers are left out of the list.
+## License and credits
 
-## Performance
-
-- The rim lens is built from nine shared tiles per rim width and corner, decoded once and cached; a surface that resizes only moves its tiles.
-- The wallpaper is sampled at a quarter of the stage's size, five times a second, and only while it moves.
-- Live wallpapers draw at up to 1.5 pixels per CSS pixel (1 on touch screens) and stop drawing when paused or hidden.
-- The Tahoe videos load only when Tahoe is the wallpaper.
-
-## Contributing
-
-Bug reports, new presets, wallpapers and fixes are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md). For a security problem, see [SECURITY.md](SECURITY.md).
-
-## Credits, trademarks and the Tahoe wallpaper
-
-- The material is Lumno's, from its New Tab page ([lumno-extension](https://github.com/kubai087/lumno-extension)).
-- **The Tahoe wallpaper is Apple's.** `media/tahoe-light.mp4`, `media/tahoe-dark.mp4`, `media/tahoe-light.webp` and `media/tahoe-dark.webp` are cut from macOS Tahoe's dynamic wallpaper, © Apple Inc. They are here only so the live demo can show the glass over the wallpaper it was designed against. **They are not covered by this project's license** and may not be reused or redistributed on its terms; leave them out of anything you build on this code. See [NOTICE](NOTICE). They will be removed on request from the rights holder.
-- Glasswork is an independent project and is **not affiliated with, endorsed by or sponsored by Apple Inc.** Apple, macOS, macOS Tahoe and Liquid Glass are trademarks of Apple Inc.; "liquid glass" here describes Lumno's own material.
-- The six live wallpapers and every image in `media/` other than the Tahoe files are original to this project.
-- [Tweakpane](https://tweakpane.github.io/docs/) and [@tweakpane/plugin-essentials](https://github.com/tweakpane/plugin-essentials) are MIT licensed and loaded from jsDelivr.
-
-## License
-
-[MIT](LICENSE) © Kubai087, for the code and for the images in `media/` that are renders of this project. The license does not cover the four Tahoe files listed above ([NOTICE](NOTICE)).
+- The code is [MIT](LICENSE), and so are the images in `media/` that this project rendered.
+- **The Tahoe wallpaper isn't covered by the MIT license.** `tahoe-light.mp4`, `tahoe-dark.mp4`, `tahoe-light.webp` and `tahoe-dark.webp` in `media/` are cut from macOS Tahoe's dynamic wallpaper, © Apple Inc. They're here only so the live demo can show the glass over the wallpaper it was designed on. Please don't reuse them, and remove them from anything you build on this code. I'll take them down if the rights holder asks. See [NOTICE](NOTICE).
+- This is a personal project with no connection to Apple. Apple, macOS, macOS Tahoe and Liquid Glass are trademarks of Apple Inc.; "liquid glass" here means Lumno's own material.
+- The panel is [Tweakpane](https://tweakpane.github.io/docs/), MIT licensed, loaded from jsDelivr.
