@@ -45,35 +45,26 @@ const MATERIALS = {
   dark: { tint: '#1e1e22', opacity: 1, thin: 0.16, dense: 0.38, blur: 2, saturation: 1.6, brightness: 0.8, contrast: 1, rimLight: 1, bevel: 1, shadow: 1 },
 };
 
-// The wallpapers, in the panel's order: macOS Tahoe's (a video, Apple's),
-// the scenes drawn live (wallpapers.js), videos from Wikimedia Commons, a
+// The wallpapers, in the panel's order: macOS's abstract ones from Tahoe
+// back to Big Sur (Apple's), the scenes drawn live (wallpapers.js), a
 // random photo, and the visitor's own file or link.
 const WALLPAPERS = {
-  Tahoe: 'tahoe', Mesh: 'mesh', Dunes: 'dunes', Aurora: 'aurora', Lava: 'lava', Rings: 'lines', Bokeh: 'bokeh',
-  Clouds: 'clouds', Waterfall: 'waterfall', Coast: 'coast', Ocean: 'ocean', 'Random photo': 'photo', 'Your own': 'custom',
+  Tahoe: 'tahoe', Sonoma: 'sonoma', Ventura: 'ventura', Monterey: 'monterey', 'Big Sur': 'bigsur',
+  Mesh: 'mesh', Dunes: 'dunes', Aurora: 'aurora', Lava: 'lava', Rings: 'lines', Bokeh: 'bokeh',
+  'Random photo': 'photo', 'Your own': 'custom',
 };
 
-// Openly licensed videos from Wikimedia Commons, trimmed and re-encoded
-// to 720p H.264 and served with the page, so every browser plays them and
-// the glass can always read them. Each is credited while it shows.
-const ONLINE = {
-  clouds: {
-    author: 'Thomas Bresson', license: 'CC BY 4.0',
-    page: 'https://commons.wikimedia.org/wiki/File:2020-04-03_timelapse-nuages-Belfort.webm',
-  },
-  waterfall: {
-    author: 'Shyamal', license: 'CC0',
-    page: 'https://commons.wikimedia.org/wiki/File:Athirapally_falls.webm',
-  },
-  coast: {
-    author: 'Szabolcs Beki', license: 'CC BY 3.0',
-    page: 'https://commons.wikimedia.org/wiki/File:Northern_Shore_of_Madeira_near_Porto_Moniz.webm',
-  },
-  ocean: {
-    author: 'Sarah Stierch', license: 'CC BY 4.0',
-    page: 'https://commons.wikimedia.org/wiki/File:Pacific_Ocean_at_Arena_Cove_-_April_2023_-_Sarah_Stierch.webm',
-  },
+// macOS's abstract wallpapers before Tahoe (Apple's, not covered by this
+// project's license), served with the page. Each has a light and a dark
+// look that follow the theme, as Tahoe's do; Sonoma's moves, the others
+// are stills.
+const APPLE = {
+  sonoma: { name: 'macOS Sonoma', video: true },
+  ventura: { name: 'macOS Ventura', video: false },
+  monterey: { name: 'macOS Monterey', video: false },
+  bigsur: { name: 'macOS Big Sur', video: false },
 };
+const appleCredit = (name) => ({ text: language.value === 'zh' ? `${name} 壁纸 © Apple Inc.` : `${name} wallpaper © Apple Inc.` });
 
 const DEFAULTS = {
   theme: 'light',
@@ -395,23 +386,71 @@ const NOTICE_MAX_MS = 8000;
 
 // ---------- Videos, photos and files ----------
 
-// The wallpaper shown in an <img> or <video> of its own: a Commons video,
+// The wallpaper shown in an <img> or <video> of its own: one of Apple's,
 // a photo, or the visitor's file or link. Only the one showing exists, so
 // an online video stops downloading once another wallpaper is chosen.
 let media = null; // { key, el, video, readable, credit }
 // The visitor's own file or link: { src, video, credit, remote }.
 let own = null;
 let previous = 'tahoe';
-const isMedia = (key = state.wallpaper) => Boolean(ONLINE[key]) || key === 'photo' || key === 'custom';
+const isMedia = (key = state.wallpaper) => Boolean(APPLE[key]) || key === 'photo' || key === 'custom';
+// The element showing now: for a light and dark pair, the theme's one.
+const mediaEl = () => (media?.pair ? media.pair[state.theme] : media?.el);
 
 const VIDEO_EXT = /\.(mp4|m4v|webm|mov|ogv|ogg)(\?|#|$)/i;
 
 function dropMedia() {
   if (!media) return;
-  media.el.removeAttribute('src');
-  if (media.video) media.el.load();
+  for (const el of media.pair ? Object.values(media.pair) : [media.el]) {
+    el.removeAttribute('src');
+    if (media.video) el.load();
+  }
   media.el.remove();
   media = null;
+}
+
+// One of Apple's wallpapers: its light and dark images (or videos) laid
+// one over the other, the dark one fading in with the theme.
+function showPair(key) {
+  dropMedia();
+  const info = APPLE[key];
+  const el = document.createElement('div');
+  el.className = 'is-media is-pair';
+  const pair = {};
+  for (const kind of ['light', 'dark']) {
+    const child = document.createElement(info.video ? 'video' : 'img');
+    child.className = `is-${kind}`;
+    child.alt = '';
+    if (info.video) {
+      Object.assign(child, { muted: true, loop: true, playsInline: true, preload: kind === state.theme ? 'auto' : 'metadata' });
+      child.poster = `./media/${key}-${kind}.jpg`;
+    }
+    child.src = `./media/${key}-${kind}.${info.video ? 'mp4' : 'jpg'}`;
+    pair[kind] = child;
+    el.append(child);
+  }
+  media = { key, el, pair, video: info.video, readable: true, apple: info.name };
+  const mine = media;
+  const shown = pair[state.theme];
+  if (!(shown.complete && !info.video)) showNotice(t(info.video ? 'Loading video…' : 'Loading image…'));
+  const ready = () => {
+    if (media !== mine) return;
+    hideNotice();
+    sampleSoon(true);
+  };
+  shown.addEventListener(info.video ? 'loadeddata' : 'load', ready, { once: true });
+  if (info.video) shown.addEventListener('playing', ready);
+  for (const child of Object.values(pair)) {
+    child.addEventListener('error', () => {
+      if (media !== mine) return;
+      showNotice(t("Couldn't load this wallpaper"), { busy: false, hideAfter: 3200, delay: 0 });
+      dropMedia();
+      state.wallpaper = 'tahoe';
+      apply();
+      refreshPanel();
+    }, { once: true });
+  }
+  wall.append(el);
 }
 
 // Puts an image or video on the wall, with the loading note while it
@@ -441,7 +480,7 @@ function showMedia(key, { src, poster, video, credit: info, remote, cors = remot
   el.addEventListener('error', () => {
     if (media !== mine) return;
     if (cors) {
-      // A host can turn a request away for a moment (Commons answers 429
+      // A host can turn a request away for a moment (busy hosts answer 429
       // when busy), so ask once more; then show it without CORS, which the
       // glass can't read but still shows.
       const again = { src, poster, video, credit: info, remote, cors: !retried, retried: true };
@@ -535,15 +574,8 @@ function syncMedia() {
     return;
   }
   if (media?.key === key && (key !== 'custom' || media.el.src === own?.src || media.el.currentSrc === own?.src)) return;
-  if (ONLINE[key]) {
-    const info = ONLINE[key];
-    showMedia(key, {
-      src: `./media/${key}.mp4`,
-      poster: `./media/${key}.jpg`,
-      video: true,
-      remote: false,
-      credit: { text: `${info.author} · ${info.license} · Wikimedia Commons`, href: info.page },
-    });
+  if (APPLE[key]) {
+    showPair(key);
   } else if (key === 'photo') {
     if (media?.key !== 'photo') {
       dropMedia();
@@ -557,7 +589,7 @@ function syncMedia() {
 // The player's clock: the playing video, or the scene's time over a minute.
 const SCENE_LOOP = 60;
 function clockSource() {
-  if (isMedia()) return media?.video ? media.el : null;
+  if (isMedia()) return media?.video ? mediaEl() : null;
   if (isScene()) return scene ? { currentTime: scene.time % SCENE_LOOP, duration: SCENE_LOOP } : null;
   return videos[state.theme];
 }
@@ -579,9 +611,12 @@ function syncPlayback() {
     }
   }
   if (media?.video) {
-    media.el.playbackRate = rate;
-    if (!state.paused && state.speed > 0) play(media.el);
-    else media.el.pause();
+    const all = media.pair ? Object.values(media.pair) : [media.el];
+    for (const el of all) el.playbackRate = rate;
+    // A pair's other video keeps playing while it fades out (switchTheme
+    // stops it).
+    if (!state.paused && state.speed > 0) play(mediaEl());
+    else all.forEach((el) => el.pause());
   }
   ensureScene();
   if (scene) {
@@ -594,7 +629,7 @@ function syncPlayback() {
   if (!isMedia() && state.wallpaper !== 'tahoe') hideNotice();
   showCredit(
     state.wallpaper === 'tahoe' ? { text: t('macOS Tahoe wallpaper © Apple Inc.') }
-      : isMedia() ? media?.credit ?? null
+      : isMedia() ? (media?.apple ? appleCredit(media.apple) : media?.credit ?? null)
         : null,
   );
   stage.toggleAttribute('data-paused', state.paused);
@@ -610,8 +645,10 @@ for (const video of Object.values(videos)) {
 let fadeTimer = 0;
 function switchTheme(next) {
   if (next === state.theme) return;
-  const from = videos[state.theme];
-  const to = videos[next];
+  // Tahoe's videos, or a pair of Apple's that moves.
+  const pair = media?.pair && media.video ? media.pair : videos;
+  const from = pair[state.theme];
+  const to = pair[next];
   if (from.readyState >= 1 && to.readyState >= 1 && to.duration) {
     to.currentTime = from.currentTime % to.duration;
   }
@@ -683,7 +720,7 @@ const read = sampler();
 const readout = { luminance: '–', ink: '–', density: '–', floor: '–', tint: '–' };
 
 function wallpaperSource() {
-  if (isMedia()) return media?.readable ? media.el : null;
+  if (isMedia()) return media?.readable ? mediaEl() : null;
   if (isScene()) return sceneCanvas;
   const video = videos[state.theme];
   return video.readyState >= 2 ? video : posters[state.theme];
@@ -797,7 +834,7 @@ requestAnimationFrame(tick);
 
 function seek(by) {
   if (isScene() && scene) scene.time += by;
-  const all = [...Object.values(videos), media?.video && media.el].filter((v) => v?.duration);
+  const all = [...Object.values(videos), ...(media?.video ? (media.pair ? Object.values(media.pair) : [media.el]) : [])].filter((v) => v?.duration);
   for (const v of all) v.currentTime = (v.currentTime + by + v.duration) % v.duration;
   sampleSoon();
 }

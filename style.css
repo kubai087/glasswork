@@ -67,6 +67,10 @@ body[data-ui="off"] { --panel-space: 0px; }
   pointer-events: none;
 }
 
+/* A light and dark pair (Tahoe's videos, Apple's other wallpapers): the
+   dark one fades in over the light one with the theme. */
+.wall .is-pair { position: absolute; inset: 0; }
+.wall .is-pair > * { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .wall .is-dark { opacity: 0; transition: opacity 620ms ease; }
 .stage[data-theme="dark"] .wall .is-dark { opacity: 1; }
 .wall .is-scene { z-index: 1; }

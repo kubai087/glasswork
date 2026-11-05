@@ -6,38 +6,24 @@ this project, are licensed under the MIT License (see LICENSE).
 
 The following files are NOT covered by that license:
 
-  media/tahoe-light.mp4
-  media/tahoe-dark.mp4
-  media/tahoe-light.webp
-  media/tahoe-dark.webp
+  media/tahoe-light.mp4, media/tahoe-dark.mp4,
+  media/tahoe-light.webp, media/tahoe-dark.webp
+    cut from the dynamic wallpaper of macOS Tahoe
+  media/sonoma-light.mp4, media/sonoma-dark.mp4,
+  media/sonoma-light.jpg, media/sonoma-dark.jpg
+    cut from the dynamic wallpaper of macOS Sonoma
+  media/ventura-light.jpg, media/ventura-dark.jpg
+    from the dynamic wallpaper of macOS Ventura
+  media/monterey-light.jpg, media/monterey-dark.jpg
+    from the dynamic wallpaper of macOS Monterey
+  media/bigsur-light.jpg, media/bigsur-dark.jpg
+    from the dynamic wallpaper of macOS Big Sur
 
-They are cut from the dynamic wallpaper of macOS Tahoe, (c) Apple Inc. They
-are included only so the live demo can show the material over the wallpaper
-it was designed against. No license to them is granted here; do not reuse or
-redistribute them, and leave them out of anything built on this code. They
-will be removed on request from the rights holder.
-
-The following files are also NOT covered by the MIT License. Each is a
-video from Wikimedia Commons under its own license, cut to at most 30
-seconds, with its sound removed and re-encoded as 720p H.264 (with a JPEG
-of its first frame as a poster), and credited on the page while it plays:
-
-  media/clouds.mp4, media/clouds.jpg
-    "2020-04-03 timelapse-nuages-Belfort.webm" by Thomas Bresson, CC BY 4.0
-    https://commons.wikimedia.org/wiki/File:2020-04-03_timelapse-nuages-Belfort.webm
-  media/waterfall.mp4, media/waterfall.jpg
-    "Athirapally falls.webm" by Shyamal, CC0 1.0
-    https://commons.wikimedia.org/wiki/File:Athirapally_falls.webm
-  media/coast.mp4, media/coast.jpg
-    "Northern Shore of Madeira near Porto Moniz.webm" by Szabolcs Beki, CC BY 3.0
-    https://commons.wikimedia.org/wiki/File:Northern_Shore_of_Madeira_near_Porto_Moniz.webm
-  media/ocean.mp4, media/ocean.jpg
-    "Pacific Ocean at Arena Cove - April 2023 - Sarah Stierch.webm" by Sarah Stierch, CC BY 4.0
-    https://commons.wikimedia.org/wiki/File:Pacific_Ocean_at_Arena_Cove_-_April_2023_-_Sarah_Stierch.webm
-
-  CC BY 4.0: https://creativecommons.org/licenses/by/4.0/
-  CC BY 3.0: https://creativecommons.org/licenses/by/3.0/
-  CC0 1.0:   https://creativecommons.org/publicdomain/zero/1.0/
+They are (c) Apple Inc., resized and re-encoded. They are included only so
+the live demo can show the material over them. No license to them is
+granted here; do not reuse or redistribute them, and leave them out of
+anything built on this code. They will be removed on request from the
+rights holder.
 
 Glasswork is an independent project and is not affiliated with, endorsed by
 or sponsored by Apple Inc. Apple, macOS, macOS Tahoe and Liquid Glass are

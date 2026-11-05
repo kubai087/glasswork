@@ -18,7 +18,7 @@ The liquid glass from [Lumno](https://lumno.kubai.design)'s New Tab page, pulled
 - Separate settings for light glass and dark glass: tint color and strength, blur, saturation, brightness, contrast, rim light, bevel and shadow.
 - The refracting rim, with its width, edge offset, falloff and color split. Corner smoothing too, and the refraction follows the corner shape.
 - Glass that looks at what's behind it. Busier wallpaper gets a denser tint, and text stays at 4.5:1 contrast.
-- Plenty of backgrounds: macOS Tahoe's dynamic wallpaper, six animated wallpapers I drew in WebGL (each with a light and a dark version), four openly licensed videos from Wikimedia Commons (clouds, a waterfall, a coast, waves), or a random photo from Unsplash.
+- Plenty of backgrounds: five generations of macOS abstract wallpapers (Tahoe, Sonoma, Ventura, Monterey and Big Sur, whose light and dark versions follow the theme; Tahoe's and Sonoma's move), six animated wallpapers I drew in WebGL (each with a light and a dark version), or a random photo from Unsplash.
 - Or use your own: upload an image or video, drag it onto the page, paste it, or paste a link to one. Local files are opened in your browser and never uploaded. A note at the top shows while a background loads.
 - The search bar, player and tint slider can be dragged around the wallpaper. Double-click to put one back.
 - Presets (Lumno, Clear glass, Frosted, Thick slab, Vivid) change only the material and the refraction, so your colors and theme stay put.
@@ -156,7 +156,7 @@ The URL only keeps what differs from the current preset. You can also write one 
 | --- | --- | --- |
 | `preset` | `lumno`, `clear-glass`, `frosted`, `thick-slab`, `vivid` | Preset |
 | `theme` | `light` (default), `dark` | Theme |
-| `wallpaper` | `tahoe` (default), `mesh`, `dunes`, `aurora`, `lava`, `lines`, `bokeh`, `clouds`, `waterfall`, `coast`, `ocean`, `photo` | Wallpaper |
+| `wallpaper` | `tahoe` (default), `sonoma`, `ventura`, `monterey`, `bigsur`, `mesh`, `dunes`, `aurora`, `lava`, `lines`, `bokeh`, `photo` | Wallpaper |
 | `photo` | a Picsum photo id | Which random photo to show |
 | `speed`, `paused` | `0`–`3`; `0` / `1` | Wallpaper speed, pause |
 | `ink` | `theme` (default), `auto`, `dark`, `light` | Text color; `auto` follows the wallpaper |
@@ -194,8 +194,7 @@ Issues and pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md).
 ## License and credits
 
 - The code is [MIT](LICENSE), and so are the images in `media/` that this project rendered.
-- **The Tahoe wallpaper isn't covered by the MIT license.** `tahoe-light.mp4`, `tahoe-dark.mp4`, `tahoe-light.webp` and `tahoe-dark.webp` in `media/` are cut from macOS Tahoe's dynamic wallpaper, © Apple Inc. They're here only so the live demo can show the glass over the wallpaper it was designed on. Please don't reuse them, and remove them from anything you build on this code. I'll take them down if the rights holder asks. See [NOTICE](NOTICE).
+- **The macOS wallpapers aren't covered by the MIT license.** The `tahoe-*`, `sonoma-*`, `ventura-*`, `monterey-*` and `bigsur-*` files in `media/` are cut or converted from macOS's own wallpapers, © Apple Inc. They're here only so the live demo can show the glass over them. Please don't reuse them, and remove them from anything you build on this code. I'll take them down if the rights holder asks. See [NOTICE](NOTICE).
 - This is a personal project with no connection to Apple. Apple, macOS, macOS Tahoe and Liquid Glass are trademarks of Apple Inc.; "liquid glass" here means [Lumno](https://lumno.kubai.design)'s own material.
-- The four videos come from Wikimedia Commons. I cut each to at most 30 seconds, dropped the sound and re-encoded them as 720p MP4 in `media/`; each keeps its own license (not MIT): [Clouds](https://commons.wikimedia.org/wiki/File:2020-04-03_timelapse-nuages-Belfort.webm) by Thomas Bresson (CC BY 4.0), [Waterfall](https://commons.wikimedia.org/wiki/File:Athirapally_falls.webm) by Shyamal (CC0), [Coast](https://commons.wikimedia.org/wiki/File:Northern_Shore_of_Madeira_near_Porto_Moniz.webm) by Szabolcs Beki (CC BY 3.0) and [Ocean](https://commons.wikimedia.org/wiki/File:Pacific_Ocean_at_Arena_Cove_-_April_2023_-_Sarah_Stierch.webm) by Sarah Stierch (CC BY 4.0). The author and license show in the bottom-left corner while one plays.
 - Random photos come from [Lorem Picsum](https://picsum.photos), which serves Unsplash photos under the Unsplash License; the photographer is credited in the corner.
 - The panel is [Tweakpane](https://tweakpane.github.io/docs/), MIT licensed, loaded from jsDelivr.

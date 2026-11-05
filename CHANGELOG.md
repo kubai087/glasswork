@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
-- **More backgrounds.** Four openly licensed videos from Wikimedia Commons (Clouds, Waterfall, Coast, Ocean), cut to at most 30 seconds and re-encoded as 720p MP4 so every browser plays them, a random photo from Lorem Picsum (Unsplash) with **Another photo**, and pasted links to an image or video; the author and license show in the stage's corner.
+- **More backgrounds.** macOS's abstract wallpapers from Sonoma back to Big Sur beside Tahoe's, each with a light and a dark version that follow the theme (Sonoma's moves), a random photo from Lorem Picsum (Unsplash) with **Another photo**, and pasted links to an image or video; who made each shows in the stage's corner.
 - **Your own file, more ways.** Upload an image or video, drop it on the page or paste it.
 - **Loading note.** A note at the top of the stage while a wallpaper loads, and when one can't be loaded or played.
 
