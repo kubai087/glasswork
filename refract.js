@@ -15,8 +15,15 @@
  *   refraction.wake();   // something changed: draw for a moment
  *
  * source() returns the wallpaper element to draw (a video, an image or a
- * canvas) and whether it moves; surfaces() returns, for each glass surface,
- * its box in the canvas's CSS pixels and how to draw it.
+ * canvas), whether it moves, and whether something else says when it has
+ * a new frame (frame(), for a canvas drawn elsewhere); surfaces() returns,
+ * for each glass surface, its box in the canvas's CSS pixels and how to
+ * draw it.
+ *
+ * It draws when the wallpaper has a new frame, so the glass never lags the
+ * wallpaper around it: a video's own frames (requestVideoFrameCallback),
+ * or frame() for a canvas. For a moment after wake() it draws every
+ * display frame, so a dragged surface follows the pointer.
  */
 
 const MAX = 8;
@@ -113,9 +120,7 @@ void main() {
   outColor = vec4(0.0);
 }`;
 
-// Draws at most this often: the videos play at 30 frames a second.
-const FRAME_MS = 1000 / 30;
-// How long a wake keeps drawing a still wallpaper (a glide, a drag).
+// How long a wake keeps drawing every display frame (a glide, a drag).
 const AWAKE_MS = 800;
 
 export function createRefraction(canvas, { source, surfaces }) {
@@ -161,8 +166,8 @@ export function createRefraction(canvas, { source, surfaces }) {
 
   let enabled = false;
   let frame = 0;
-  let drawn = 0;
   let awakeUntil = 0;
+  let hooked = null; // the video whose frames draw the glass
   let uploaded = null; // the still source last uploaded
   let failed = false;
 
@@ -180,13 +185,15 @@ export function createRefraction(canvas, { source, surfaces }) {
     }
   }
 
-  function draw() {
+  // fresh: the wallpaper has a new frame, so upload it even if it isn't
+  // playing (a paused video that was seeked).
+  function draw(fresh = false) {
     const { el, moving } = source() || {};
     const width = el && (el.videoWidth || el.naturalWidth || el.width);
     const height = el && (el.videoHeight || el.naturalHeight || el.height);
     const ready = width && height && !(el.readyState !== undefined && el.readyState < 2);
     if (!ready) return;
-    if (!upload(el, moving)) {
+    if (!upload(el, moving || fresh)) {
       failed = true;
       canvas.dispatchEvent(new Event('refractionfailed'));
       return;
@@ -223,15 +230,31 @@ export function createRefraction(canvas, { source, surfaces }) {
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 
+  // Each new frame of a playing video draws the glass, in step with it.
+  function hookVideo(video) {
+    if (hooked === video || !video.requestVideoFrameCallback) return;
+    hooked = video;
+    const onFrame = () => {
+      if (hooked !== video || !enabled) return;
+      draw(true);
+      video.requestVideoFrameCallback(onFrame);
+    };
+    video.requestVideoFrameCallback(onFrame);
+  }
+
   function loop(now) {
     frame = 0;
     if (!enabled || document.hidden) return;
-    const moving = source()?.moving;
-    if (now - drawn >= FRAME_MS - 4) {
-      drawn = now;
-      draw();
-    }
-    if (moving || now < awakeUntil) frame = requestAnimationFrame(loop);
+    const src = source();
+    const video = src?.el?.tagName === 'VIDEO' && src.el.requestVideoFrameCallback ? src.el : null;
+    if (video) hookVideo(video);
+    else hooked = null;
+    // Moving wallpapers that say when they have a frame draw then; the rest
+    // (a video without frame callbacks) draw on every display frame.
+    const timed = Boolean(video) || src?.external;
+    const awake = now < awakeUntil;
+    if (awake || (src?.moving && !timed)) draw();
+    if (awake || (src?.moving && !timed)) frame = requestAnimationFrame(loop);
   }
 
   function wake() {
@@ -253,6 +276,10 @@ export function createRefraction(canvas, { source, surfaces }) {
         uploaded = null;
         wake();
       }
+    },
+    // The wallpaper (a canvas drawn elsewhere) has a new frame.
+    frame() {
+      if (enabled && !document.hidden) draw(true);
     },
     // A new wallpaper: upload it afresh.
     reset() {

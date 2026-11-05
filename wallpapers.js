@@ -304,6 +304,8 @@ export function createScene(canvas) {
     gl.uniform1f(p.time, time);
     gl.uniform1f(p.dark, dark * dark * (3 - 2 * dark));
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+    // For anything drawn from this canvas (refract.js).
+    canvas.dispatchEvent(new Event('scenedraw'));
   }
 
   function loop(now) {

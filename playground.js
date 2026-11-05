@@ -789,7 +789,7 @@ function refractionSource() {
     const video = videos[state.theme];
     el = video.readyState >= 2 ? video : posters[state.theme];
   }
-  return el ? { el, moving: moving() && (el.tagName === 'VIDEO' || el === sceneCanvas) } : null;
+  return el ? { el, moving: moving() && (el.tagName === 'VIDEO' || el === sceneCanvas), external: el === sceneCanvas } : null;
 }
 
 function refractionSurfaces() {
@@ -829,6 +829,8 @@ function startRefraction() {
   if (!refraction) return;
   refraction.setEnabled(true);
   stage.dataset.refract = 'webgl';
+  // A live wallpaper's every frame.
+  sceneCanvas.addEventListener('scenedraw', () => isScene() && refraction.frame());
   // A wallpaper it can't read (another site's, without CORS): the CSS glass.
   refractionCanvas.addEventListener('refractionfailed', () => {
     refraction.setEnabled(false);
@@ -1344,16 +1346,25 @@ async function buildPane() {
   adaptFolder.addBinding(state, 'legible', { label: 'Keep legible' });
   adaptFolder.addBinding(state, 'threshold', { label: 'Threshold', min: 0.2, max: 0.8, step: 0.01 });
   adaptFolder.addBlade({ view: 'separator' });
-  adaptFolder.addBinding(readout, 'luminance', { label: 'Luminance', readonly: true, interval: 500 });
-  adaptFolder.addBinding(readout, 'ink', { label: 'Ink', readonly: true, interval: 500 });
-  adaptFolder.addBinding(readout, 'density', { label: 'Density', readonly: true, interval: 500 });
-  adaptFolder.addBinding(readout, 'floor', { label: 'Floor', readonly: true, interval: 500 });
-  adaptFolder.addBinding(readout, 'tint', { label: 'Tint', readonly: true, interval: 500 });
+  // What the player card reads off the wallpaper, as plain rows of the
+  // folder: Tweakpane's read-only bindings raise the pane's change event on
+  // every refresh, which would re-apply the settings twice a second.
+  const readoutRows = document.createElement('div');
+  readoutRows.className = 'readouts';
+  adaptFolder.element.querySelector('.tp-fldv_c')?.append(readoutRows);
+  const READOUTS = [['luminance', 'Luminance'], ['ink', 'Ink'], ['density', 'Density'], ['floor', 'Floor'], ['tint', 'Tint']];
+  const showReadouts = () => {
+    if (document.body.dataset.ui === 'off' || !adaptFolder.expanded) return;
+    readoutRows.replaceChildren(...READOUTS.map(([key, label]) => {
+      const row = document.createElement('div');
+      row.append(Object.assign(document.createElement('span'), { textContent: t(label) }), Object.assign(document.createElement('b'), { textContent: readout[key] }));
+      return row;
+    }));
+  };
+  showReadouts();
+  setInterval(showReadouts, 500);
 
   const refraction = pane.addFolder({ title: 'Refraction' });
-  if (!lensSupported) {
-    refraction.addBinding({ support: t('Chromium only') }, 'support', { label: 'Support', readonly: true });
-  }
   refraction.addBinding(state, 'lens', { label: 'On' });
   refraction.addBinding(state, 'rim', { label: 'Rim width', min: 4, max: 96, step: 1 });
   refraction.addBinding(state, 'edge', { label: 'Edge', min: 0, max: 2.5, step: 0.01 });
