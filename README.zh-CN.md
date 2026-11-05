@@ -2,7 +2,7 @@
 
 [English](README.md) · **简体中文**
 
-[Lumno](https://lumno.kubai.design) 新标签页上那层液态玻璃，我把它单独拿出来，做成了一个可以随便调的 Playground。着色、模糊、边缘折射、边缘光、文字颜色，每一层都在面板上，调到满意了点「复制 CSS」带走就行。
+[Lumno](https://lumno.kubai.design) 新标签页上的液态玻璃材质，我把它单独做成了一个可以调整参数的 Playground。着色、模糊、边缘折射、边缘光、文字颜色，每一层都可以在面板上调整，调好后点「复制 CSS」即可得到对应的代码。
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![No build step](https://img.shields.io/badge/build-none-brightgreen.svg)](#本地运行)
@@ -13,33 +13,33 @@
 
 **[在线体验](https://www.kubai.design/glasswork/?lang=zh)** · [X 上的原帖](https://x.com/Kubai087/status/2117782193108082923) · [Prompt](#用到自己的产品里)
 
-## 可以玩什么
+## 功能
 
 - 浅色玻璃、深色玻璃各一套参数：着色颜色和浓淡、模糊、饱和度、亮度、对比度、边缘光、内侧柔光、阴影。
 - 边缘折射的边宽、偏移、衰减和色散都能调。圆角也能调平滑度，折射会跟着圆角走。
-- 玻璃会看身后的壁纸：背景越花，着色越浓，文字始终保持 4.5:1 的对比度。
-- 背景有很多选择：从 Tahoe 往前数的五代 macOS 抽象壁纸（Tahoe、Sonoma、Ventura、Monterey、Big Sur，深浅两版跟着主题切换，Tahoe 和 Sonoma 是动态的）；6 张我用 WebGL 画的动态壁纸，深浅模式各一版；或者随机来一张 Unsplash 的照片。
+- 玻璃会根据身后的壁纸自动调整：背景越复杂，着色越浓，文字始终保持 4.5:1 的对比度。
+- 背景有很多选择：从 Tahoe 往前数的五代 macOS 抽象壁纸（Tahoe、Sonoma、Ventura、Monterey、Big Sur，深浅两版跟着主题切换，Tahoe 和 Sonoma 是动态的）；6 张我用 WebGL 画的动态壁纸，深浅模式各一版；或者随机加载一张 Unsplash 的照片。
 - 也可以用你自己的图片或视频：点上传、直接拖进页面、粘贴文件，或者贴一个图片 / 视频链接都行。本地文件只在你的浏览器里打开，不会上传。背景加载时顶部会有提示。
-- 搜索框、播放器、染色滑条可以拖着在壁纸上走，双击回到原位。
-- 预设有 Lumno、全透、磨砂、厚玻璃、鲜艳几种，只改材质和折射，你调过的颜色、主题这些不会被冲掉。
-- 所有设置都记在网址里，把链接发给别人，打开就是同一块玻璃。
+- 搜索框、播放器、染色滑条可以在壁纸上拖动，双击回到原位。
+- 预设有 Lumno、全透、磨砂、厚玻璃、鲜艳几种，只改材质和折射，你调过的颜色、主题等设置会保留。
+- 所有设置都记在网址里，把链接发给别人，打开后是相同的效果。
 
 ![6 张动态壁纸的浅色版和深色版](media/wallpapers.jpg)
 
 ## 这层玻璃是怎么做的
 
-组件本身一行不动，只换掉四个声明：`background`、`backdrop-filter`、`box-shadow`、`color`。底下拆成 6 层：
+组件的结构不变，只替换四个声明：`background`、`backdrop-filter`、`box-shadow`、`color`。效果拆成 6 层：
 
 1. **投影**：控制卡片的体积感。
-2. **模糊与提亮**：背景只模糊 2px，同时提高饱和度和亮度，玻璃更通透，不发奶白。深色玻璃反过来压暗，也不会发灰。
-3. **边缘折射**：用 SVG 位移贴图把边缘一圈的背景往里压，越靠边压得越狠，中间保持平整；红光比蓝光多弯一点，就有了色散。
+2. **模糊与提亮**：背景只模糊 2px，同时提高饱和度和亮度，玻璃更通透，不会泛白。深色玻璃则相反，降低亮度，同时不会发灰。
+3. **边缘折射**：用 SVG 位移贴图把边缘一圈的背景向内偏移，越靠近边缘偏移越大，中间保持平整；红光的偏移比蓝光略大，从而形成色散。
 4. **着色**：一层半透明的颜色，透明度跟着背景的复杂程度自动调。
-5. **边缘光**：左上、右下各一道，再往内侧缩进一道，整体就有了厚度。
-6. **文字着色**：浅色玻璃上用正片叠底，深色玻璃上叠加提亮。文字会带一点背景的颜色，不是死板的纯色。
+5. **边缘光**：左上、右下各一道，再向内缩进一道，形成厚度感。
+6. **文字着色**：浅色玻璃上用正片叠底，深色玻璃上叠加提亮。文字会带有一点背景的颜色，而不是单一的纯色。
 
-另外每块玻璃会在身后读 15 个采样点，算出平均亮度。墨色设成「自动」的话，低于 0.5 就换成深色玻璃配浅色字。
+另外每块玻璃会读取身后的 15 个采样点，计算平均亮度。墨色设为「自动」时，亮度低于 0.5 会切换为深色玻璃和浅色文字。
 
-![波纹壁纸上的播放器卡片，边缘把条纹往里折，带一圈彩边](media/refraction.jpg)
+![波纹壁纸上的播放器卡片，边缘的条纹向内折射，带一圈彩边](media/refraction.jpg)
 
 推荐参数，也就是 [Lumno](https://lumno.kubai.design) 现在用的：
 
@@ -52,7 +52,7 @@
 
 ## 用到自己的产品里
 
-最省事的办法是把下面这段 Prompt 交给 Claude Code、Cursor 这类 AI 编程工具，它会在你现有的组件上换材质，不动布局。这是帖子里附的那段，原文是英文。
+最简单的方法是把下面这段 Prompt 交给 Claude Code、Cursor 这类 AI 编程工具，它会在你现有的组件上替换材质，不改动布局。这段是帖子里附的原文，为英文。
 
 <details>
 <summary><b>展开 Prompt</b></summary>
@@ -122,9 +122,9 @@ Hover brightens the tint by about 14% instead of lifting a shadow.
 
 </details>
 
-想自己动手的话，在 Playground 里调好，点工具栏的 `</>`，会得到浅色（`.glass`）和深色（`.glass.is-dark`）两套 CSS，数值就是你调出来的。仓库里的 `glass.css` 是同一套材质的变量写法。
+如果想手动接入，在 Playground 里调好参数，点工具栏的 `</>`，会得到浅色（`.glass`）和深色（`.glass.is-dark`）两套 CSS，数值就是你调出来的。仓库里的 `glass.css` 是同一套材质的变量写法。
 
-边缘折射要额外引一个小脚本，没有依赖：
+边缘折射需要额外引入一个小脚本，没有依赖：
 
 ```html
 <script type="module">
@@ -135,18 +135,18 @@ Hover brightens the tint by about 14% instead of lifting a shadow.
 </script>
 ```
 
-元素的 `backdrop-filter` 最后要接上 `var(--glass-lens,)`，折射会填进这个变量里，元素尺寸变了也会自己跟上。
+元素的 `backdrop-filter` 最后要接上 `var(--glass-lens,)`，折射会写入这个变量，元素尺寸变化时会自动更新。
 
 | 选项 | 默认值 | 作用 |
 | --- | --- | --- |
 | `rim` | `40` | 边宽上限，单位 px。小组件会自动缩到短边的 1/3.5 |
-| `edge` | `1.1` | 最外沿往里偏移几倍边宽 |
-| `power` | `2.6` | 往里走时折射衰减得多快 |
-| `dispersion` | `0.15` | 红光比蓝光多弯多少，`0` 就是不分色 |
-| `radius`、`corner` | 读 CSS | 圆角半径和形状，一般不用填 |
-| `enabled` | `true` | 临时关掉折射 |
+| `edge` | `1.1` | 最外沿向内偏移几倍边宽 |
+| `power` | `2.6` | 从边缘向内，折射衰减的速度 |
+| `dispersion` | `0.15` | 红光比蓝光多偏移多少，`0` 表示不分色 |
+| `radius`、`corner` | 从 CSS 读取 | 圆角半径和形状，一般不用填 |
+| `enabled` | `true` | 临时关闭折射 |
 
-它会返回 `update(options)`、`refresh()` 和 `destroy()`。如果还想让玻璃跟着背景换深浅、调浓度，可以看 `adapt.js`。
+它会返回 `update(options)`、`refresh()` 和 `destroy()`。如果还想让玻璃根据背景切换深浅、调整浓度，可以参考 `adapt.js`。
 
 ## 网址参数
 
@@ -171,7 +171,7 @@ Hover brightens the tint by about 14% instead of lifting a shadow.
 
 ## 本地运行
 
-不用装依赖，也没有构建步骤，起一个静态服务器就行：
+不需要安装依赖，也没有构建步骤，启动一个静态服务器即可：
 
 ```bash
 git clone https://github.com/kubai087/glasswork.git
@@ -181,13 +181,13 @@ python3 -m http.server 8000
 
 打开 <http://localhost:8000>。控制台里有 `window.__glass`，调试时方便看状态。
 
-文件很少：`glass.css` 是材质，`lens.js` 是折射，`adapt.js` 负责读壁纸，`wallpapers.js` 是那 6 张动态壁纸，`playground.js` 管面板和页面交互。
+文件很少：`glass.css` 是材质，`lens.js` 是折射，`adapt.js` 负责读取壁纸，`wallpapers.js` 是那 6 张动态壁纸，`playground.js` 负责面板和页面交互。
 
 ## 浏览器
 
-Chrome、Edge、Arc 这类 Chromium 内核的浏览器效果最完整。Safari 和 Firefox 画不出边缘折射，会退回纯 CSS 的玻璃，着色、模糊、边缘光都还在。圆角平滑度需要 Chromium 139 以上。如果贴的链接所在的网站不允许跨域读取，背景照样能显示，只是玻璃读不到它，会改用跟随主题的墨色和偏浓的着色。
+Chrome、Edge、Arc 这类 Chromium 内核的浏览器效果最完整。Safari 和 Firefox 不支持边缘折射，会退回纯 CSS 的玻璃，着色、模糊、边缘光都还在。圆角平滑度需要 Chromium 139 以上。如果链接所在的网站不允许跨域读取，背景仍能正常显示，但玻璃无法读取它，会改用跟随主题的墨色和较浓的着色。
 
-想改点什么或者发现问题，欢迎开 Issue 或 PR，规范写在 [CONTRIBUTING.md](CONTRIBUTING.md)。
+如需修改或发现问题，欢迎提交 Issue 或 PR，规范写在 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ## 版权
 
