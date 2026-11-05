@@ -2,7 +2,7 @@
 
 **English** · [简体中文](README.zh-CN.md)
 
-The liquid glass from Lumno's New Tab page, pulled out into a playground you can tune. Tint, blur, the refracting rim, rim light and text color each have their own controls, and once it looks right, **Copy CSS** gives you the code.
+The liquid glass from [Lumno](https://lumno.kubai.design)'s New Tab page, pulled out into a playground you can tune. Tint, blur, the refracting rim, rim light and text color each have their own controls, and once it looks right, **Copy CSS** gives you the code.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![No build step](https://img.shields.io/badge/build-none-brightgreen.svg)](#run-it-locally)
@@ -41,7 +41,7 @@ Each surface also reads 15 points of the wallpaper behind it and averages their 
 
 ![The player card over the Rings wallpaper, its edge folding the stripes inward with a colored fringe](media/refraction.jpg)
 
-The values Lumno uses:
+The values [Lumno](https://lumno.kubai.design) uses:
 
 | | Tint | Blur | Saturation | Brightness |
 | --- | --- | --- | --- | --- |
@@ -195,7 +195,7 @@ Issues and pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 - The code is [MIT](LICENSE), and so are the images in `media/` that this project rendered.
 - **The Tahoe wallpaper isn't covered by the MIT license.** `tahoe-light.mp4`, `tahoe-dark.mp4`, `tahoe-light.webp` and `tahoe-dark.webp` in `media/` are cut from macOS Tahoe's dynamic wallpaper, © Apple Inc. They're here only so the live demo can show the glass over the wallpaper it was designed on. Please don't reuse them, and remove them from anything you build on this code. I'll take them down if the rights holder asks. See [NOTICE](NOTICE).
-- This is a personal project with no connection to Apple. Apple, macOS, macOS Tahoe and Liquid Glass are trademarks of Apple Inc.; "liquid glass" here means Lumno's own material.
+- This is a personal project with no connection to Apple. Apple, macOS, macOS Tahoe and Liquid Glass are trademarks of Apple Inc.; "liquid glass" here means [Lumno](https://lumno.kubai.design)'s own material.
 - The four videos come from Wikimedia Commons. I cut each to at most 30 seconds, dropped the sound and re-encoded them as 720p MP4 in `media/`; each keeps its own license (not MIT): [Clouds](https://commons.wikimedia.org/wiki/File:2020-04-03_timelapse-nuages-Belfort.webm) by Thomas Bresson (CC BY 4.0), [Waterfall](https://commons.wikimedia.org/wiki/File:Athirapally_falls.webm) by Shyamal (CC0), [Coast](https://commons.wikimedia.org/wiki/File:Northern_Shore_of_Madeira_near_Porto_Moniz.webm) by Szabolcs Beki (CC BY 3.0) and [Ocean](https://commons.wikimedia.org/wiki/File:Pacific_Ocean_at_Arena_Cove_-_April_2023_-_Sarah_Stierch.webm) by Sarah Stierch (CC BY 4.0). The author and license show in the bottom-left corner while one plays.
 - Random photos come from [Lorem Picsum](https://picsum.photos), which serves Unsplash photos under the Unsplash License; the photographer is credited in the corner.
 - The panel is [Tweakpane](https://tweakpane.github.io/docs/), MIT licensed, loaded from jsDelivr.

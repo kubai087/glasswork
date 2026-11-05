@@ -2,7 +2,7 @@
 
 [English](README.md) · **简体中文**
 
-Lumno 新标签页上那层液态玻璃，我把它单独拿出来，做成了一个可以随便调的 Playground。着色、模糊、边缘折射、边缘光、文字颜色，每一层都在面板上，调到满意了点「复制 CSS」带走就行。
+[Lumno](https://lumno.kubai.design) 新标签页上那层液态玻璃，我把它单独拿出来，做成了一个可以随便调的 Playground。着色、模糊、边缘折射、边缘光、文字颜色，每一层都在面板上，调到满意了点「复制 CSS」带走就行。
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![No build step](https://img.shields.io/badge/build-none-brightgreen.svg)](#本地运行)
@@ -41,7 +41,7 @@ Lumno 新标签页上那层液态玻璃，我把它单独拿出来，做成了�
 
 ![波纹壁纸上的播放器卡片，边缘把条纹往里折，带一圈彩边](media/refraction.jpg)
 
-推荐参数，也就是 Lumno 现在用的：
+推荐参数，也就是 [Lumno](https://lumno.kubai.design) 现在用的：
 
 | | 着色 | 模糊 | 饱和度 | 亮度 |
 | --- | --- | --- | --- | --- |
@@ -193,7 +193,7 @@ Chrome、Edge、Arc 这类 Chromium 内核的浏览器效果最完整。Safari �
 
 - 代码以 [MIT](LICENSE) 开源，`media/` 里由这个项目渲染出来的图片也一样。
 - **Tahoe 的动态壁纸不在 MIT 范围内。** `media/` 里的 `tahoe-light.mp4`、`tahoe-dark.mp4`、`tahoe-light.webp`、`tahoe-dark.webp` 截自 macOS Tahoe 的动态壁纸，版权属于 Apple Inc.。放在这里只是为了在线演示能看到玻璃在原本那张壁纸上的样子，请不要拿去用，基于这份代码做东西时也请删掉它们。如果权利人要求，我会马上移除。详见 [NOTICE](NOTICE)。
-- 这是个人项目，和 Apple 没有任何关系。Apple、macOS、macOS Tahoe、Liquid Glass 是 Apple Inc. 的商标，这里说的液态玻璃指的是 Lumno 自己的材质。
+- 这是个人项目，和 Apple 没有任何关系。Apple、macOS、macOS Tahoe、Liquid Glass 是 Apple Inc. 的商标，这里说的液态玻璃指的是 [Lumno](https://lumno.kubai.design) 自己的材质。
 - 4 段实拍视频来自 Wikimedia Commons，我截取了最多 30 秒、去掉声音，转成 720p 的 MP4 放在 `media/` 里，各自沿用原来的协议（不在 MIT 范围内）：[云](https://commons.wikimedia.org/wiki/File:2020-04-03_timelapse-nuages-Belfort.webm)（Thomas Bresson，CC BY 4.0）、[瀑布](https://commons.wikimedia.org/wiki/File:Athirapally_falls.webm)（Shyamal，CC0）、[海岸](https://commons.wikimedia.org/wiki/File:Northern_Shore_of_Madeira_near_Porto_Moniz.webm)（Szabolcs Beki，CC BY 3.0）、[海浪](https://commons.wikimedia.org/wiki/File:Pacific_Ocean_at_Arena_Cove_-_April_2023_-_Sarah_Stierch.webm)（Sarah Stierch，CC BY 4.0）。播放时左下角会显示作者和协议。
 - 随机照片来自 [Lorem Picsum](https://picsum.photos)，原图出自 Unsplash，遵循 Unsplash License，左下角会显示摄影师。
 - 面板用的是 [Tweakpane](https://tweakpane.github.io/docs/)，MIT 许可，从 jsDelivr 加载。
