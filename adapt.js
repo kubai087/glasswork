@@ -22,8 +22,9 @@ const smoothstep = (v) => {
 export const luma = ([r, g, b]) => (r * 0.299 + g * 0.587 + b * 0.114) / 255;
 const chroma = ([r, g, b]) => (Math.max(r, g, b) - Math.min(r, g, b)) / 255;
 
-// The scale the wallpaper is drawn at for sampling: plenty for a 5 x 3 grid.
-const SAMPLE_SCALE = 0.25;
+// The scale the wallpaper is drawn at for sampling: plenty for a 5 x 3 grid
+// under each surface, and little to copy back from the GPU.
+const SAMPLE_SCALE = 0.125;
 
 const XS = [0.18, 0.34, 0.5, 0.66, 0.82];
 const YS = [0.24, 0.5, 0.76];

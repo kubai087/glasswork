@@ -292,7 +292,7 @@ function apply() {
   labelToolbar();
   syncTintControl();
   applyLens();
-  sampleSoon();
+  sampleSoon(true);
   save();
 }
 
@@ -396,7 +396,7 @@ function showMedia(key, { src, poster, video, credit: info, remote, cors = remot
   const ready = () => {
     if (media !== mine) return;
     hideNotice();
-    sampleSoon();
+    sampleSoon(true);
   };
   el.addEventListener(video ? 'loadeddata' : 'load', ready, { once: true });
   if (video) {
@@ -653,12 +653,16 @@ function wallpaperSource() {
   return video.readyState >= 2 ? video : posters[state.theme];
 }
 
-const setVar = (el, name, value) => {
-  const text = value.toFixed(3);
-  if (el.style.getPropertyValue(name) !== text) el.style.setProperty(name, text);
+// A surface's reading only changes its glass when it has moved far enough:
+// each change starts a half-second glide, and a moving wallpaper nudges
+// the reading on every sample. A settings change (force) always applies.
+const setVar = (el, name, value, force) => {
+  const old = Number.parseFloat(el.style.getPropertyValue(name));
+  if (Number.isFinite(old) && Math.abs(value - old) < (force ? 0.0005 : 0.04)) return;
+  el.style.setProperty(name, value.toFixed(3));
 };
 
-function decide(el, stageBox) {
+function decide(el, stageBox, force) {
   const box = el.getBoundingClientRect();
   const patch = read.ready ? read.sample({ x: box.left - stageBox.left, y: box.top - stageBox.top, w: box.width, h: box.height }) : null;
   let ink;
@@ -677,9 +681,9 @@ function decide(el, stageBox) {
   // a dense tint, so its text reads whatever is behind it.
   else if (!patch && state.autoDensity && isMedia() && media && !media.readable) density = 0.85;
   if (patch && state.legible) floor = tintFloor(patch.luminance, patch.texture, ink, luma(hexRgb(m.tint)));
-  setVar(el, '--density', density);
-  setVar(el, '--keep', keep);
-  setVar(el, '--floor', floor);
+  setVar(el, '--density', density, force);
+  setVar(el, '--keep', keep, force);
+  setVar(el, '--floor', floor, force);
   if (el === player) {
     const alpha = Math.min(0.95, Math.max(floor, (m.thin + (m.dense - m.thin) * density) * m.opacity));
     Object.assign(readout, {
@@ -695,25 +699,31 @@ function decide(el, stageBox) {
 
 let lastDensity = 0.35;
 let sampleFrame = 0;
+let sampleForce = false;
 
 function sampleNow() {
   sampleFrame = 0;
+  const force = sampleForce;
+  sampleForce = false;
   const stageBox = stage.getBoundingClientRect();
   const source = wallpaperSource();
   if (!source || !read.capture(source, stageBox.width, stageBox.height)) read.clear();
-  for (const el of glasses) decide(el, stageBox);
+  for (const el of glasses) decide(el, stageBox, force);
 }
 
-function sampleSoon() {
+function sampleSoon(force = false) {
+  sampleForce ||= force;
   if (!sampleFrame) sampleFrame = requestAnimationFrame(sampleNow);
 }
 
-// The wallpaper moves, so read it a few times a second while it plays.
+// A moving wallpaper is read a few times a second while it plays; a still
+// one only when something changes.
+const moving = () => !state.paused && state.speed > 0 && (state.wallpaper === 'tahoe' || isScene() || Boolean(media?.video));
 setInterval(() => {
-  if (!state.paused && !document.hidden) sampleSoon();
+  if (moving() && !document.hidden) sampleSoon();
 }, 200);
-Object.values(videos).forEach((v) => v.addEventListener('loadeddata', sampleSoon));
-Object.values(posters).forEach((p) => p.addEventListener('load', sampleSoon));
+Object.values(videos).forEach((v) => v.addEventListener('loadeddata', () => sampleSoon(true)));
+Object.values(posters).forEach((p) => p.addEventListener('load', () => sampleSoon(true)));
 
 // ---------- The player ----------
 
@@ -722,12 +732,21 @@ const timeLeft = $('[data-time="left"]');
 const clock = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 let shown = '';
 
+// The bar moves by its own translate, so a new position restyles only the
+// bar, not the whole card.
+const progressFill = $('.p-fill', player);
+let shownProgress = -1;
+
 function tick() {
   const video = clockSource();
   if (video?.duration) {
     const now = video.currentTime;
     const total = video.duration;
-    player.style.setProperty('--progress', (now / total).toFixed(4));
+    const progress = Math.round((now / total) * 1000) / 1000;
+    if (progress !== shownProgress) {
+      shownProgress = progress;
+      progressFill.style.translate = `${((progress - 1) * 100).toFixed(1)}% 0`;
+    }
     const text = `${clock(now)} -${clock(Math.max(0, total - now))}`;
     if (text !== shown) {
       shown = text;
@@ -1098,11 +1117,11 @@ async function buildPane() {
   adaptFolder.addBinding(state, 'legible', { label: 'Keep legible' });
   adaptFolder.addBinding(state, 'threshold', { label: 'Threshold', min: 0.2, max: 0.8, step: 0.01 });
   adaptFolder.addBlade({ view: 'separator' });
-  adaptFolder.addBinding(readout, 'luminance', { label: 'Luminance', readonly: true, interval: 250 });
-  adaptFolder.addBinding(readout, 'ink', { label: 'Ink', readonly: true, interval: 250 });
-  adaptFolder.addBinding(readout, 'density', { label: 'Density', readonly: true, interval: 250 });
-  adaptFolder.addBinding(readout, 'floor', { label: 'Floor', readonly: true, interval: 250 });
-  adaptFolder.addBinding(readout, 'tint', { label: 'Tint', readonly: true, interval: 250 });
+  adaptFolder.addBinding(readout, 'luminance', { label: 'Luminance', readonly: true, interval: 500 });
+  adaptFolder.addBinding(readout, 'ink', { label: 'Ink', readonly: true, interval: 500 });
+  adaptFolder.addBinding(readout, 'density', { label: 'Density', readonly: true, interval: 500 });
+  adaptFolder.addBinding(readout, 'floor', { label: 'Floor', readonly: true, interval: 500 });
+  adaptFolder.addBinding(readout, 'tint', { label: 'Tint', readonly: true, interval: 500 });
 
   const refraction = pane.addFolder({ title: 'Refraction' });
   if (!lensSupported) {

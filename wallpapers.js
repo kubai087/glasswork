@@ -228,9 +228,13 @@ void main() {
 // In the order the panel lists them.
 export const SCENES = { mesh: MESH, dunes: DUNES, aurora: AURORA, lava: LAVA, lines: LINES, bokeh: BOKEH };
 
-// The pixels drawn for each CSS pixel: the glass blurs what is behind it,
-// so there is no need for a phone's full density.
-const density = () => Math.min(devicePixelRatio || 1, matchMedia('(pointer: coarse)').matches ? 1 : 1.5);
+// The pixels drawn for each CSS pixel: the scenes are soft and the glass
+// blurs what is behind it, so one per CSS pixel is plenty.
+const density = () => Math.min(devicePixelRatio || 1, 1);
+
+// The scenes move slowly, so they draw at most 30 times a second, as the
+// videos play; the glass over them then refracts half as often.
+const FRAME_MS = 1000 / 30;
 
 export function createScene(canvas) {
   const gl = canvas.getContext('webgl2', { alpha: false, antialias: false, preserveDrawingBuffer: true });
@@ -246,6 +250,7 @@ export function createScene(canvas) {
   let visible = false;
   let frame = 0;
   let last = 0;
+  let drawn = 0;
 
   function compile(type, source) {
     const shader = gl.createShader(type);
@@ -308,7 +313,13 @@ export function createScene(canvas) {
     if (playing) time += dt * speed;
     // The theme fades over 620ms, as the Tahoe videos do.
     if (dark !== darkTarget) dark = darkTarget > dark ? Math.min(darkTarget, dark + dt / 0.62) : Math.max(darkTarget, dark - dt / 0.62);
-    draw();
+    // A frame early by a few milliseconds still counts, so 60Hz displays
+    // draw every other frame rather than drifting.
+    const due = !playing || now - drawn >= FRAME_MS - 4;
+    if (due) {
+      drawn = now;
+      draw();
+    }
     if (visible && !document.hidden && (playing || dark !== darkTarget)) frame = requestAnimationFrame(loop);
     else last = 0;
   }

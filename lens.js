@@ -50,6 +50,11 @@ export const ROUND_CORNER = 2;
 // Too small a surface has no flat middle to look through.
 const LENS_MIN_PX = 32;
 
+// While the rim keeps changing (a slider being dragged, a window being
+// resized), the lens already there bends to the new width and the new
+// tiles are built once it has been still this long.
+const SETTLE_MS = 140;
+
 const SVG = 'http://www.w3.org/2000/svg';
 
 // Only Chromium draws url() in backdrop-filter. Firefox parses it and draws
@@ -104,7 +109,8 @@ function bendNearCorner(x, y, radius, bezel, corner, power) {
     // The contours are nested, so the depth a point lies at is found by halving.
     let low = 0;
     let high = 1;
-    for (let step = 0; step < 24; step += 1) {
+    // 14 halvings place a point within 1/16000 of the rim: finer than a pixel.
+    for (let step = 0; step < 14; step += 1) {
       const middle = (low + high) / 2;
       if (isWithinContour(x, y, middle, radius, bezel, corner)) low = middle;
       else high = middle;
@@ -304,6 +310,8 @@ export function liquidGlass(el, options = {}) {
   let current = null; // { key, lens, width, height }
   let token = 0;
   let frame = 0;
+  let lastChange = 0;
+  let settle = 0;
 
   function clear() {
     token += 1;
@@ -346,6 +354,20 @@ export function liquidGlass(el, options = {}) {
       setScale(current.lens, bezel);
       return;
     }
+    const now = performance.now();
+    const settling = current && now - lastChange < SETTLE_MS;
+    lastChange = now;
+    if (settling) {
+      if (current.width !== width || current.height !== height) {
+        placeFilter(current.lens, width, height);
+        current.width = width;
+        current.height = height;
+      }
+      setScale(current.lens, bezel);
+      clearTimeout(settle);
+      settle = setTimeout(schedule, SETTLE_MS);
+      return;
+    }
     const mine = ++token;
     const tiles = await lensTiles(radius, bezel, corner, opts.power);
     if (mine !== token) return;
@@ -368,6 +390,7 @@ export function liquidGlass(el, options = {}) {
   function destroy() {
     observer.disconnect();
     cancelAnimationFrame(frame);
+    clearTimeout(settle);
     clear();
   }
 
