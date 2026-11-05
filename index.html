@@ -29,6 +29,10 @@
        once more, and if the page's script hasn't started after a while,
        the page reloads once. -->
   <script>
+    // Errors from the start, for ?debug=1 (debug.js).
+    window.__errors = [];
+    addEventListener('error', function (e) { window.__errors.push((e.message || 'resource ' + (e.target && (e.target.src || e.target.href))) + (e.filename ? ' @' + e.filename.split('/').pop() + ':' + e.lineno : '')); }, true);
+    addEventListener('unhandledrejection', function (e) { window.__errors.push('rejection ' + (e.reason && e.reason.message || e.reason)); });
     function retryStyle(link) {
       if (link.dataset.retried) return;
       var again = link.cloneNode();

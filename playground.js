@@ -1112,6 +1112,8 @@ requestAnimationFrame(() => setTimeout(() => {
 }, 0));
 apply();
 translate(document.body);
+// ?debug=1 adds a panel for checking the page on a phone (debug.js).
+if (params.has('debug')) import('./debug.js');
 // The page is running (index.html reloads once if it never gets here).
 document.documentElement.dataset.ready = '1';
 try { sessionStorage.removeItem('glasswork:reloaded'); } catch {}
