@@ -1,0 +1,34 @@
+{
+  "name": "glasswork",
+  "version": "1.0.0",
+  "description": "Lumno's liquid glass material: tokens, a refracting thick-rim lens and wallpaper-adaptive ink, with a live playground.",
+  "type": "module",
+  "main": "lens.js",
+  "exports": {
+    ".": "./lens.js",
+    "./lens.js": "./lens.js",
+    "./adapt.js": "./adapt.js",
+    "./glass.css": "./glass.css"
+  },
+  "files": [
+    "lens.js",
+    "adapt.js",
+    "glass.css"
+  ],
+  "keywords": [
+    "liquid-glass",
+    "glassmorphism",
+    "backdrop-filter",
+    "refraction",
+    "svg-filter",
+    "design-engineering",
+    "css"
+  ],
+  "homepage": "https://www.kubai.design/glasswork/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kubai087/glasswork.git"
+  },
+  "license": "MIT",
+  "author": "Kubai087"
+}
