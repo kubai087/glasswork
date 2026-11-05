@@ -95,9 +95,7 @@ body[data-ui="off"] { --panel-space: 0px; }
 }
 
 .surfaces > * {
-  /* The glass's own layers (glass.css) fill the surface. A dragged surface
-     moves by its offsets, not a translate, which would make it a stacking
-     context and cut its glass off from the wallpaper behind it. */
+  /* A dragged surface moves by its offsets. */
   position: relative;
   left: var(--dx, 0px);
   top: var(--dy, 0px);
@@ -208,13 +206,14 @@ body[data-ui="off"] { --panel-space: 0px; }
   margin-top: calc(7 * var(--u));
   border-radius: 99px;
   background: var(--well);
-  overflow: hidden;
 }
 
 .p-fill {
   position: absolute;
   inset: 0 auto 0 0;
   width: 0;
+  /* Its own rounded ends: the track doesn't clip (see glass.css). */
+  min-width: calc(5 * var(--u));
   border-radius: inherit;
   background: var(--ink-solid);
   opacity: var(--ink-a);
@@ -307,8 +306,7 @@ body[data-ui="off"] { --panel-space: 0px; }
 .toolbar {
   --b: clamp(34px, calc(34 * var(--u)), 40px);
   /* Centred by its margins, and above the surfaces by its place in the
-     page: a z-index or translate would make it a stacking context (see
-     .surfaces > *). */
+     page. */
   position: absolute;
   left: 0;
   right: var(--panel-space);
