@@ -181,11 +181,11 @@ python3 -m http.server 8000
 
 Open <http://localhost:8000>. `window.__glass` in the console is there for debugging.
 
-There aren't many files: `glass.css` is the material, `lens.js` the refraction, `adapt.js` reads the wallpaper, `wallpapers.js` draws the six wallpapers, and `playground.js` runs the panel and the page.
+There aren't many files: `glass.css` is the material, `lens.js` the refraction, `refract.js` the same refraction drawn in WebGL for Safari and Firefox, `adapt.js` reads the wallpaper, `wallpapers.js` draws the six wallpapers, and `playground.js` runs the panel and the page.
 
 ## Browsers
 
-Chromium browsers (Chrome, Edge, Arc and so on) show everything. Safari and Firefox can't draw the refraction and fall back to plain CSS glass, which still has the tint, blur and rim light. Corner smoothing needs Chromium 139 or later.
+Chromium browsers (Chrome, Edge, Arc and so on) draw the refraction with an SVG filter in `backdrop-filter` (`lens.js`). Safari, every browser on iOS and Firefox can't, so there the playground draws the glass's backdrop itself in WebGL (`refract.js`): the same rim, color split, blur and tone, under the same tint and rim light. `lens.js` on its own still needs Chromium. Corner smoothing needs Chromium 139 or later; in Safari the glass keeps round corners, because iOS 27 fails to draw a blurred surface clipped to a superellipse.
 
 If you paste a link from a site that doesn't allow cross-origin reads, it still shows, but the glass can't read it, so it uses the theme's ink and a denser tint.
 

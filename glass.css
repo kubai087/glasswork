@@ -180,6 +180,13 @@
    round corners; what isn't glass (the album art) keeps its continuous
    ones. */
 [data-engine="webkit"] .glass { corner-shape: round; }
+
+/* Where the backdrop is drawn in WebGL (refract.js), the surfaces only add
+   their tint, rim light and ink over it. */
+.stage[data-refract="webgl"] .glass {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
 .glass svg.ink,
 .glass .ink svg { color: var(--ink-solid); opacity: var(--ink-a); }
 

@@ -74,6 +74,18 @@ body[data-ui="off"] { --panel-space: 0px; }
 .wall .is-dark { opacity: 0; transition: opacity 620ms ease; }
 .stage[data-theme="dark"] .wall .is-dark { opacity: 1; }
 .wall .is-scene { z-index: 1; }
+
+/* The glass's backdrop drawn in WebGL (refract.js), between the wallpaper
+   and the surfaces, where backdrop-filter can't take the lens. */
+.refraction {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.refraction[hidden] { display: none; }
 .wall .is-media { z-index: 2; }
 .wall [hidden] { display: none; }
 

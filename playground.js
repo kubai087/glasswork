@@ -7,6 +7,8 @@
  * - adapt.js: reading the wallpaper under each surface: ink, tint density,
  *   saturation and the least tint its text needs.
  * - wallpapers.js: moving wallpapers drawn live in WebGL, besides Tahoe.
+ * - refract.js: the glass's backdrop drawn in WebGL, refraction included,
+ *   where backdrop-filter can't take an SVG filter (Safari, Firefox).
  *
  * Every setting goes in the URL (only those that differ from the defaults),
  * so a reload or a shared link opens the same glass. Keys: H hides the
@@ -16,6 +18,7 @@ import { liquidGlass, isLensSupported } from './lens.js';
 import { sampler, pickInk, adapt, tintFloor, luma } from './adapt.js';
 import { createPane } from './panel.js';
 import { createScene, SCENES } from './wallpapers.js';
+import { createRefraction } from './refract.js';
 import { language, t, translate } from './i18n.js';
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -284,6 +287,7 @@ function apply() {
   syncTintControl();
   applyLens();
   markPills();
+  refraction?.wake();
   sampleSoon(true);
   // After a theme or wallpaper change has finished gliding.
   redrawGlass(700);
@@ -485,6 +489,7 @@ function showPair(key) {
   const ready = () => {
     if (media !== mine) return;
     hideNotice();
+    refreshRefraction();
     sampleSoon(true);
   };
   shown.addEventListener(info.video ? 'loadeddata' : 'load', ready, { once: true });
@@ -519,6 +524,7 @@ function showMedia(key, { src, poster, video, credit: info, remote, cors = remot
   const ready = () => {
     if (media !== mine) return;
     hideNotice();
+    refreshRefraction();
     sampleSoon(true);
   };
   el.addEventListener(video ? 'loadeddata' : 'load', ready, { once: true });
@@ -753,6 +759,7 @@ addEventListener('paste', (event) => {
 
 // Choosing "Your own" before giving a file asks for one.
 function showWallpaper() {
+  refreshRefraction();
   if (state.wallpaper === 'custom' && !own) {
     state.wallpaper = previous;
     upload.click();
@@ -761,6 +768,83 @@ function showWallpaper() {
   }
   apply();
   refreshPanel();
+}
+
+// ---------- Refraction drawn in WebGL ----------
+
+// Where backdrop-filter can't take the lens's SVG filter, the glass's
+// backdrop is drawn on a canvas between the wallpaper and the surfaces
+// (refract.js), and the surfaces drop their own backdrop filter. Made after
+// the first frame; until then, and wherever it can't run, the CSS glass
+// stays.
+const refractionCanvas = Object.assign(document.createElement('canvas'), { className: 'refraction', hidden: true });
+stage.insertBefore(refractionCanvas, $('.surfaces'));
+let refraction = null;
+
+function refractionSource() {
+  let el;
+  if (isMedia()) el = mediaEl();
+  else if (isScene()) el = sceneCanvas;
+  else {
+    const video = videos[state.theme];
+    el = video.readyState >= 2 ? video : posters[state.theme];
+  }
+  return el ? { el, moving: moving() && (el.tagName === 'VIDEO' || el === sceneCanvas) } : null;
+}
+
+function refractionSurfaces() {
+  const stageBox = stage.getBoundingClientRect();
+  const u = unit();
+  return glasses.map((el) => {
+    const box = el.getBoundingClientRect();
+    const m = materials[el.dataset.kind === 'dark' ? 'dark' : 'light'];
+    const veil = Math.min(1, m.opacity);
+    const radius = Number.parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0;
+    return {
+      x: box.left - stageBox.left,
+      y: box.top - stageBox.top,
+      w: box.width,
+      h: box.height,
+      radius: Math.min(radius, box.width / 2, box.height / 2),
+      rim: Math.max(4, Math.min(state.rim * u, Math.min(box.width, box.height) / 3.5)),
+      edge: state.lens ? state.edge : 0,
+      power: state.power,
+      dispersion: state.lens ? state.dispersion : 0,
+      blur: m.blur * u,
+      saturate: m.saturation,
+      contrast: 1 + (m.contrast - 1) * veil,
+      brightness: 1 + (m.brightness - 1) * veil,
+      keep: Number.parseFloat(el.style.getPropertyValue('--keep')) || 1,
+    };
+  });
+}
+
+function startRefraction() {
+  if (lensSupported || refraction || typeof WebGL2RenderingContext !== 'function') return;
+  try {
+    refraction = createRefraction(refractionCanvas, { source: refractionSource, surfaces: refractionSurfaces });
+  } catch {
+    refraction = null;
+  }
+  if (!refraction) return;
+  refraction.setEnabled(true);
+  stage.dataset.refract = 'webgl';
+  // A wallpaper it can't read (another site's, without CORS): the CSS glass.
+  refractionCanvas.addEventListener('refractionfailed', () => {
+    refraction.setEnabled(false);
+    delete stage.dataset.refract;
+  });
+}
+
+// A new wallpaper is uploaded afresh, and one that failed gets another try.
+function refreshRefraction() {
+  if (!refraction) return;
+  if (refraction.failed || !stage.dataset.refract) {
+    refraction.setEnabled(true);
+    stage.dataset.refract = 'webgl';
+  } else {
+    refraction.reset();
+  }
 }
 
 // ---------- Reading the wallpaper ----------
@@ -912,6 +996,7 @@ for (const el of surfaces) {
     const moveX = clampTo(event.clientX - start.x, [stageBox.left - box.left - box.width / 2, stageBox.right - box.right + box.width / 2]);
     const moveY = clampTo(event.clientY - start.y, [stageBox.top - box.top - box.height / 2, stageBox.bottom - box.bottom + box.height / 2]);
     el.style.setProperty('--dx', `${start.dx + moveX}px`);
+    refraction?.wake();
     el.style.setProperty('--dy', `${start.dy + moveY}px`);
     sampleSoon();
   });
@@ -1138,6 +1223,7 @@ if (params.get('ui') === '0' || (!params.has('ui') && PHONE.matches)) document.b
 // bend a moment later.
 const idle = (fn) => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 500 }) : setTimeout(fn, 50));
 requestAnimationFrame(() => setTimeout(() => {
+  idle(startRefraction);
   const next = (i) => {
     if (i >= glasses.length) return;
     idle(() => {
