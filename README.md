@@ -6,7 +6,7 @@ The liquid glass from [Lumno](https://lumno.kubai.design)'s New Tab page, pulled
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![No build step](https://img.shields.io/badge/build-none-brightgreen.svg)](#run-it-locally)
-[![Refraction: Chromium](https://img.shields.io/badge/refraction-Chromium-4285f4.svg)](#browsers)
+[![Refraction: Chromium and WebGL](https://img.shields.io/badge/refraction-Chromium%20%7C%20WebGL-4285f4.svg)](#browsers)
 [![Live demo](https://img.shields.io/badge/demo-live-black.svg)](https://www.kubai.design/glasswork/)
 
 ![Glass search bar, player, tint slider and toolbar over the Dunes wallpaper, with the settings panel on the right](media/preview.jpg)

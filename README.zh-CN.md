@@ -6,7 +6,7 @@
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![No build step](https://img.shields.io/badge/build-none-brightgreen.svg)](#本地运行)
-[![Refraction: Chromium](https://img.shields.io/badge/refraction-Chromium-4285f4.svg)](#浏览器)
+[![Refraction: Chromium and WebGL](https://img.shields.io/badge/refraction-Chromium%20%7C%20WebGL-4285f4.svg)](#浏览器)
 [![Live demo](https://img.shields.io/badge/demo-live-black.svg)](https://www.kubai.design/glasswork/?lang=zh)
 
 ![沙丘壁纸上的玻璃搜索框、播放器、染色滑条和工具栏，右边是设置面板](media/preview.jpg)
