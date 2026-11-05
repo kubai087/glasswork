@@ -181,11 +181,11 @@ python3 -m http.server 8000
 
 打开 <http://localhost:8000>。控制台里有 `window.__glass`，调试时方便看状态。
 
-文件很少：`glass.css` 是材质，`lens.js` 是折射，`adapt.js` 负责读取壁纸，`wallpapers.js` 是那 6 张动态壁纸，`playground.js` 负责面板和页面交互。
+文件很少：`glass.css` 是材质，`lens.js` 是折射，`refract.js` 是给 Safari 和 Firefox 用的 WebGL 版折射，`adapt.js` 负责读取壁纸，`wallpapers.js` 是那 6 张动态壁纸，`playground.js` 负责面板和页面交互。
 
 ## 浏览器
 
-Chrome、Edge、Arc 这类 Chromium 内核的浏览器效果最完整。Safari 和 Firefox 不支持边缘折射，会退回纯 CSS 的玻璃，着色、模糊、边缘光都还在。圆角平滑度需要 Chromium 139 以上。如果链接所在的网站不允许跨域读取，背景仍能正常显示，但玻璃无法读取它，会改用跟随主题的墨色和较浓的着色。
+Chrome、Edge、Arc 这类 Chromium 内核的浏览器用 `backdrop-filter` 里的 SVG 滤镜画边缘折射（`lens.js`）。Safari、iOS 上的所有浏览器和 Firefox 不支持这种写法，Playground 会改用 WebGL 自己画玻璃背后那一层（`refract.js`）：同样的厚边折射、色散、模糊和提亮，上面再叠玻璃的底色和边缘光。单独使用 `lens.js` 仍然只在 Chromium 里有折射。圆角平滑度需要 Chromium 139 以上；Safari 里玻璃用普通圆角，因为 iOS 27 画不出「超椭圆圆角 + 背景模糊」的组合。如果链接所在的网站不允许跨域读取，背景仍能正常显示，但玻璃无法读取它，会改用跟随主题的墨色和较浓的着色。
 
 如需修改或发现问题，欢迎提交 Issue 或 PR，规范写在 [CONTRIBUTING.md](CONTRIBUTING.md)。
 

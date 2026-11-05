@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **Your own file, more ways.** Upload an image or video, drop it on the page or paste it.
 - **Loading note.** A note at the top of the stage while a wallpaper loads, and when one can't be loaded or played.
 
+- **Refraction in Safari and Firefox.** Where `backdrop-filter` can't take an SVG filter, the glass's backdrop is drawn in WebGL (`refract.js`) between the wallpaper and the surfaces: the same rim, color split, blur and tone, at up to 30 frames a second while the wallpaper moves or something changes.
+
 ### Changed
 
 - **Faster.** About half the main-thread work while a wallpaper moves: the glass only restyles when what it reads has changed enough, the progress bar moves on its own, sampling reads a smaller copy and only while the wallpaper moves, and the live wallpapers draw at 30 frames a second and one pixel per CSS pixel. Dragging a refraction slider no longer drops frames: the lens bends to the new rim at once and rebuilds its tiles when the slider stops.
