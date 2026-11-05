@@ -295,7 +295,7 @@ function apply() {
 // switch, a glide between tints) until the surface moves. Giving the
 // layers a compositing hint for a moment rebuilds them, with nothing to
 // see. Chromium draws them anyway.
-const needsRedraw = /AppleWebKit/.test(navigator.userAgent) && !/Chrome|Chromium|CriOS|Edg/.test(navigator.userAgent);
+const needsRedraw = document.documentElement.dataset.engine === 'webkit';
 let redrawTimer = 0;
 // A redraw already on its way isn't put off by the next request, so a
 // stream of changes can't keep it from happening.

@@ -172,6 +172,14 @@
 }
 
 .glass .ink-2 { color: var(--ink-2); }
+
+/* WebKit (Safari, and every browser on iOS) can leave the larger surfaces
+   undrawn when their blurred element holds blended text: the player stays
+   blank until it is dragged, then paints in patches. There the ink is
+   drawn as plain translucent color, without a group to blend in. */
+[data-engine="webkit"] .glass { isolation: auto; }
+[data-engine="webkit"] .glass .ink,
+[data-engine="webkit"] .glass .ink-2 { mix-blend-mode: normal; }
 .glass svg.ink,
 .glass .ink svg { color: var(--ink-solid); opacity: var(--ink-a); }
 
