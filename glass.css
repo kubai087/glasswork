@@ -118,10 +118,34 @@
      elsewhere the plain border-radius stays. */
   corner-shape: superellipse(var(--corner-k, 1));
   color: var(--ink);
+}
+
+/* The glass is drawn in two layers of its own, around the content: the
+   tint and the backdrop filter under it (::before), the rim light, bevel
+   and shadow over it (::after). iOS can leave a whole surface undrawn when
+   the element with the backdrop filter also holds blended, clipped content
+   (the player), so the filter sits on a layer that holds nothing.
+   The layers stack by their order alone (::before, the content, ::after)
+   and the surface must not form a stacking context of its own (no
+   z-index, transform, isolation or opacity): a group holding blended ink
+   becomes the root of the backdrop, and the filter would see nothing
+   behind the glass. */
+.glass > * { position: relative; }
+
+.glass::before,
+.glass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  corner-shape: inherit;
+  pointer-events: none;
+}
+
+.glass::before {
   background: color-mix(in srgb, var(--m-tint) calc(var(--tint-a) * 100%), transparent);
   -webkit-backdrop-filter: var(--filter);
   backdrop-filter: var(--filter) var(--glass-lens,);
-  isolation: isolate;
 }
 
 /* Light glass: light caught where the rim faces it, on the top left and
@@ -130,7 +154,7 @@
    just inside the edge, so the plate reads as a thick slab. The bands stay
    within a few pixels of the edge: a box shadow only mixes plain white and
    black, so a wide band washes the scene's color out. */
-.glass {
+.glass::after {
   box-shadow:
     inset calc(1.5 * var(--u)) calc(1.5 * var(--u)) var(--u) calc(-1 * var(--u)) rgb(255 255 255 / calc(1 * var(--m-catch))),
     inset calc(-1.5 * var(--u)) calc(-1.5 * var(--u)) var(--u) calc(-1 * var(--u)) rgb(255 255 255 / calc(0.6 * var(--m-catch))),
@@ -146,7 +170,7 @@
 /* Dark glass: the same light, dimmer, with a darker outline and shadow.
    The bottom shade stays faint: over a light wallpaper dark glass is a mid
    tone, which black only muddies. */
-.glass[data-kind="dark"] {
+.glass[data-kind="dark"]::after {
   box-shadow:
     inset var(--u) var(--u) calc(0.5 * var(--u)) calc(-0.5 * var(--u)) rgb(255 255 255 / calc(0.46 * var(--m-catch))),
     inset calc(-1 * var(--u)) calc(-1 * var(--u)) calc(0.5 * var(--u)) calc(-0.5 * var(--u)) rgb(255 255 255 / calc(0.18 * var(--m-catch))),
@@ -160,11 +184,11 @@
 }
 
 /* Everything drawn on the glass blends with it. Icons are drawn opaque and
-   faded whole: a translucent color darkens where strokes overlap. */
+   faded whole: a translucent color darkens where strokes overlap. The
+   slider stays unblended, so its thumb stays white. */
 .glass .ink,
 .glass .ink-2,
-.glass .p-progress,
-.glass .tint-range {
+.glass .p-progress {
   mix-blend-mode: var(--blend);
 }
 
@@ -181,16 +205,17 @@
     --m-catch 620ms ease, --m-bevel 620ms ease, --m-shadow 620ms ease,
     --density 500ms ease, --keep 500ms ease, --floor 500ms ease,
     --ink 620ms ease, --ink-2 620ms ease, --ink-solid 620ms ease, --ink-a 620ms ease,
-    --well 620ms ease, --row-hover 620ms ease, --row-active 620ms ease,
-    box-shadow 620ms ease;
+    --well 620ms ease, --row-hover 620ms ease, --row-active 620ms ease;
 }
 
-.stage[data-tuning] .glass { transition: none; }
+.glass::after { transition: box-shadow 620ms ease; }
+.stage[data-tuning] .glass,
+.stage[data-tuning] .glass::after { transition: none; }
 
 /* Without transparency, or with forced colors: a solid surface in the same
    tint. */
 @media (prefers-reduced-transparency: reduce) {
-  .glass {
+  .glass::before {
     background: color-mix(in srgb, var(--m-tint) 96%, transparent);
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
@@ -198,5 +223,6 @@
 }
 
 @media (forced-colors: active) {
-  .glass { border: 1px solid CanvasText; background: Canvas; backdrop-filter: none; }
+  .glass { border: 1px solid CanvasText; }
+  .glass::before { background: Canvas; backdrop-filter: none; }
 }

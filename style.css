@@ -95,8 +95,13 @@ body[data-ui="off"] { --panel-space: 0px; }
 }
 
 .surfaces > * {
+  /* The glass's own layers (glass.css) fill the surface. A dragged surface
+     moves by its offsets, not a translate, which would make it a stacking
+     context and cut its glass off from the wallpaper behind it. */
+  position: relative;
+  left: var(--dx, 0px);
+  top: var(--dy, 0px);
   pointer-events: auto;
-  translate: var(--dx, 0px) var(--dy, 0px);
   touch-action: none;
   cursor: grab;
 }
@@ -301,11 +306,15 @@ body[data-ui="off"] { --panel-space: 0px; }
    can be dragged. */
 .toolbar {
   --b: clamp(34px, calc(34 * var(--u)), 40px);
+  /* Centred by its margins, and above the surfaces by its place in the
+     page: a z-index or translate would make it a stacking context (see
+     .surfaces > *). */
   position: absolute;
-  z-index: 3;
-  left: calc((100% - var(--panel-space)) / 2);
+  left: 0;
+  right: var(--panel-space);
+  width: max-content;
+  margin: 0 auto;
   bottom: 16px;
-  translate: -50% 0;
   display: flex;
   align-items: center;
   gap: 2px;

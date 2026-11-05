@@ -22,7 +22,7 @@ document.head.append(style);
 const switches = { blur: true, blend: true, video: true, transitions: true };
 function restyle() {
   style.textContent = [
-    switches.blur ? '' : '.glass { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }',
+    switches.blur ? '' : '.glass::before { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }',
     switches.blend ? '' : '.glass * { mix-blend-mode: normal !important; }',
     switches.video ? '' : '.wall video { display: none !important; }',
     switches.transitions ? '' : '.glass { transition: none !important; }',

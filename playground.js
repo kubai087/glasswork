@@ -1038,7 +1038,7 @@ function exportCss() {
     '.glass.is-pill { border-radius: 999px; corner-shape: round; }',
   ].join('\n');
   const css = [
-    "/* Lumno's liquid glass, from Glasswork (https://www.kubai.design/glasswork/).\n   Light glass with dark ink by default; .glass.is-dark for dark glass with light ink. */",
+    "/* Lumno's liquid glass, from Glasswork (https://www.kubai.design/glasswork/).\n   Light glass with dark ink by default; .glass.is-dark for dark glass with light ink.\n   If Safari leaves a surface with busy content undrawn, move background and\n   backdrop-filter to a ::before under the content, as glass.css in the repo does. */",
     shape,
     materialCss('light', '.glass'),
     materialCss('dark', '.glass.is-dark'),
