@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - **Faster.** About half the main-thread work while a wallpaper moves: the glass only restyles when what it reads has changed enough, the progress bar moves on its own, sampling reads a smaller copy and only while the wallpaper moves, and the live wallpapers draw at 30 frames a second and one pixel per CSS pixel. Dragging a refraction slider no longer drops frames: the lens bends to the new rim at once and rebuilds its tiles when the slider stops.
 - A cover image for links to the page (`media/og.jpg`).
+- Corners follow tip 004: capsules (a radius of half the height or more) keep round ends instead of a flattened superellipse, and the player's art takes the card's radius minus its padding, so both share one corner center.
 - The settings float over the wallpaper at the top right instead of being docked beside it.
 - The refraction button shows when it is off: its icon is struck through and dimmed, and its tip says on or off.
 - A wallpaper the glass can't read (another site's, without CORS) takes the theme's ink and a dense tint.

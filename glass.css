@@ -69,6 +69,11 @@
   --blend: multiply;
 }
 
+/* A capsule (its radius at least half its height) keeps round ends: a
+   superellipse on a radius that is already half the box flattens them.
+   The page marks capsules as they are sized (data-pill). */
+.glass[data-pill] { corner-shape: round; }
+
 .glass[data-kind="dark"] {
   --m-tint: var(--d-tint, #1e1e22);
   --m-k: var(--d-k, 1);
@@ -109,6 +114,8 @@
     saturate(var(--keep));
 
   border-radius: calc(var(--radius, 28) * var(--u, 1px));
+  /* Continuous corners, where the browser draws them (Chromium 139+);
+     elsewhere the plain border-radius stays. */
   corner-shape: superellipse(var(--corner-k, 1));
   color: var(--ink);
   background: color-mix(in srgb, var(--m-tint) calc(var(--tint-a) * 100%), transparent);

@@ -283,8 +283,21 @@ function apply() {
   labelToolbar();
   syncTintControl();
   applyLens();
+  markPills();
   sampleSoon(true);
   save();
+}
+
+// Surfaces whose radius reaches half their height are capsules, which keep
+// round ends (glass.css); the lens follows the corner it is given.
+function markPills() {
+  for (const el of glasses) {
+    const radius = Number.parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0;
+    const pill = radius >= el.offsetHeight / 2 - 0.5;
+    if (pill === el.hasAttribute('data-pill')) continue;
+    el.toggleAttribute('data-pill', pill);
+    lenses.get(el)?.refresh();
+  }
 }
 
 function syncTintControl() {
@@ -951,6 +964,7 @@ addEventListener('keydown', (event) => {
 
 // The panel opening or closing resizes the stage, which changes --u.
 new ResizeObserver(() => {
+  markPills();
   applyLens();
   sampleSoon();
 }).observe(stage);
@@ -1019,6 +1033,8 @@ function exportCss() {
     `  border-radius: ${n(state.radius, 1)}px;`,
     ...(Math.abs(state.smoothing - 1) > 1e-3 ? [`  corner-shape: superellipse(${n(state.smoothing, 2)});`] : []),
     '}',
+    '/* Capsules keep round ends. */',
+    '.glass.is-pill { border-radius: 999px; corner-shape: round; }',
   ].join('\n');
   const css = [
     "/* Lumno's liquid glass, from Glasswork (https://www.kubai.design/glasswork/).\n   Light glass with dark ink by default; .glass.is-dark for dark glass with light ink. */",
