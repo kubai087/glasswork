@@ -197,7 +197,9 @@ function lensTiles(radius, bezel, corner, power) {
     return entry;
   }
   const { size, tiles } = tilePixels(radius, bezel, corner, power);
-  const urls = tiles.map((tile) => {
+  // Encoded with toBlob, which compresses off the main thread, and kept as
+  // object URLs for as long as the page lives (a rim's tiles are small).
+  entry = Promise.all(tiles.map((tile) => {
     const canvas = document.createElement('canvas');
     canvas.width = tile.width;
     canvas.height = tile.height;
@@ -205,13 +207,14 @@ function lensTiles(radius, bezel, corner, power) {
     const image = context.createImageData(tile.width, tile.height);
     image.data.set(tile.data);
     context.putImageData(image, 0, 0);
-    return canvas.toDataURL('image/png');
-  });
-  entry = Promise.all(urls.map((url) => {
-    const image = new Image();
-    image.src = url;
-    return image.decode().catch(() => {});
-  })).then(() => ({ size, urls }));
+    return new Promise((resolve) => canvas.toBlob(resolve, 'image/png')).then(async (blob) => {
+      const url = blob ? URL.createObjectURL(blob) : canvas.toDataURL('image/png');
+      const decoded = new Image();
+      decoded.src = url;
+      await decoded.decode().catch(() => {});
+      return url;
+    });
+  })).then((urls) => ({ size, urls }));
   tileCache.set(key, entry);
   while (tileCache.size > TILE_CACHE_MAX) tileCache.delete(tileCache.keys().next().value);
   return entry;

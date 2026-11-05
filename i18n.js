@@ -31,6 +31,7 @@ const ZH = {
   Link: '链接',
   Photo: '照片',
   'Loading video…': '正在加载视频…',
+  'Tap anywhere to play the wallpaper': '点一下屏幕开始播放壁纸',
   'Loading image…': '正在加载图片…',
   "Couldn't load this wallpaper": '这张壁纸加载失败',
   "This browser can't play this video": '这个浏览器播放不了这个视频',

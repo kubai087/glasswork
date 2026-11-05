@@ -322,11 +322,21 @@ const posters = Object.fromEntries(Object.entries(videos).map(([kind, video]) =>
 // The scenes drawn live share one canvas over the videos.
 const sceneCanvas = Object.assign(document.createElement('canvas'), { className: 'is-scene', hidden: true });
 wall.append(sceneCanvas);
-const scene = createScene(sceneCanvas);
-if (!scene && SCENES[state.wallpaper]) state.wallpaper = 'tahoe';
-scene?.setDark(state.theme === 'dark', true);
-const scenesSupported = Boolean(scene);
-const isScene = () => Boolean(scene && SCENES[state.wallpaper]);
+// Made the first time a scene is chosen: a WebGL context can take the GPU
+// a second to set up, which the page shouldn't wait for otherwise.
+let scene = null;
+let scenesSupported = typeof WebGL2RenderingContext === 'function';
+if (!scenesSupported && SCENES[state.wallpaper]) state.wallpaper = 'tahoe';
+const isScene = () => scenesSupported && Boolean(SCENES[state.wallpaper]);
+function ensureScene() {
+  if (scene || !isScene()) return;
+  scene = createScene(sceneCanvas);
+  if (scene) scene.setDark(state.theme === 'dark', true);
+  else {
+    scenesSupported = false;
+    state.wallpaper = 'tahoe';
+  }
+}
 
 // ---------- Loading and credit ----------
 
@@ -334,7 +344,7 @@ const isScene = () => Boolean(scene && SCENES[state.wallpaper]);
 // fails. It waits a moment, so a quick load shows nothing.
 const notice = $('.notice');
 let noticeTimer = 0;
-function showNotice(text, { busy = true, hideAfter = 0, delay = 220 } = {}) {
+function showNotice(text, { busy = true, hideAfter = busy ? NOTICE_MAX_MS : 0, delay = 220 } = {}) {
   clearTimeout(noticeTimer);
   noticeTimer = setTimeout(() => {
     $('span', notice).textContent = text;
@@ -357,6 +367,31 @@ function showCredit(info) {
   if (info.href) credit.href = info.href;
   else credit.removeAttribute('href');
 }
+
+// ---------- Playing ----------
+
+// Phones can refuse to play even a muted video until someone touches the
+// page (iOS in Low Power Mode, data savers). Then the poster stays, the
+// loading note goes, and the first touch anywhere starts it.
+let waitingForTouch = false;
+function play(video) {
+  video.play().catch((error) => {
+    if (error?.name !== 'NotAllowedError' || waitingForTouch) return;
+    waitingForTouch = true;
+    showNotice(t('Tap anywhere to play the wallpaper'), { busy: false, hideAfter: 4000, delay: 0 });
+    const resume = () => {
+      waitingForTouch = false;
+      hideNotice();
+      syncPlayback();
+    };
+    addEventListener('pointerdown', resume, { once: true, capture: true });
+    addEventListener('keydown', resume, { once: true, capture: true });
+  });
+}
+
+// A loading note never stays up for good: a slow network shows the poster
+// meanwhile, and the note goes after a while.
+const NOTICE_MAX_MS = 8000;
 
 // ---------- Videos, photos and files ----------
 
@@ -523,7 +558,7 @@ function syncMedia() {
 const SCENE_LOOP = 60;
 function clockSource() {
   if (isMedia()) return media?.video ? media.el : null;
-  if (isScene()) return { currentTime: scene.time % SCENE_LOOP, duration: SCENE_LOOP };
+  if (isScene()) return scene ? { currentTime: scene.time % SCENE_LOOP, duration: SCENE_LOOP } : null;
   return videos[state.theme];
 }
 
@@ -540,14 +575,15 @@ function syncPlayback() {
     else if (kind === state.theme) {
       video.preload = 'auto';
       if (video.readyState < 3) showNotice(t('Loading video…'), { delay: 400 });
-      video.play().catch(() => {});
+      play(video);
     }
   }
   if (media?.video) {
     media.el.playbackRate = rate;
-    if (!state.paused && state.speed > 0) media.el.play().catch(() => {});
+    if (!state.paused && state.speed > 0) play(media.el);
     else media.el.pause();
   }
+  ensureScene();
   if (scene) {
     scene.setVisible(isScene());
     if (isScene()) scene.setMode(state.wallpaper);
@@ -716,12 +752,13 @@ function sampleSoon(force = false) {
   if (!sampleFrame) sampleFrame = requestAnimationFrame(sampleNow);
 }
 
-// A moving wallpaper is read a few times a second while it plays; a still
-// one only when something changes.
+// A moving wallpaper is read a few times a second while it plays (each
+// read copies a frame back from the GPU); a still one only when something
+// changes.
 const moving = () => !state.paused && state.speed > 0 && (state.wallpaper === 'tahoe' || isScene() || Boolean(media?.video));
 setInterval(() => {
   if (moving() && !document.hidden) sampleSoon();
-}, 200);
+}, 400);
 Object.values(videos).forEach((v) => v.addEventListener('loadeddata', () => sampleSoon(true)));
 Object.values(posters).forEach((p) => p.addEventListener('load', () => sampleSoon(true)));
 
@@ -759,7 +796,7 @@ function tick() {
 requestAnimationFrame(tick);
 
 function seek(by) {
-  if (isScene()) scene.time += by;
+  if (isScene() && scene) scene.time += by;
   const all = [...Object.values(videos), media?.video && media.el].filter((v) => v?.duration);
   for (const v of all) v.currentTime = (v.currentTime + by + v.duration) % v.duration;
   sampleSoon();
@@ -1006,9 +1043,20 @@ function refreshPanel() {
 
 if (params.get('ui') === '0' || (!params.has('ui') && PHONE.matches)) document.body.dataset.ui = 'off';
 
-for (const el of glasses) {
-  lenses.set(el, liquidGlass(el, lensOptions()));
-}
+// The lenses come after the first frame, one surface at a time when the
+// page is idle, so opening the page shows the glass at once and the rims
+// bend a moment later.
+const idle = (fn) => (window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 500 }) : setTimeout(fn, 50));
+requestAnimationFrame(() => setTimeout(() => {
+  const next = (i) => {
+    if (i >= glasses.length) return;
+    idle(() => {
+      lenses.set(glasses[i], liquidGlass(glasses[i], lensOptions()));
+      next(i + 1);
+    });
+  };
+  next(0);
+}, 0));
 apply();
 translate(document.body);
 
