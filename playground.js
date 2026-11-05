@@ -46,12 +46,45 @@ const MATERIALS = {
 };
 
 // The wallpapers, in the panel's order: macOS Tahoe's (a video, Apple's),
-// the scenes drawn live (wallpapers.js), and the visitor's own file.
-const WALLPAPERS = { Tahoe: 'tahoe', Mesh: 'mesh', Dunes: 'dunes', Aurora: 'aurora', Lava: 'lava', Rings: 'lines', Bokeh: 'bokeh', 'Your own': 'custom' };
+// the scenes drawn live (wallpapers.js), videos streamed from Wikimedia
+// Commons, a random photo, and the visitor's own file or link.
+const WALLPAPERS = {
+  Tahoe: 'tahoe', Mesh: 'mesh', Dunes: 'dunes', Aurora: 'aurora', Lava: 'lava', Rings: 'lines', Bokeh: 'bokeh',
+  Clouds: 'clouds', Waterfall: 'waterfall', Coast: 'coast', Ocean: 'ocean', 'Random photo': 'photo', 'Your own': 'custom',
+};
+
+// Openly licensed videos on Wikimedia Commons, streamed from there in the
+// size Commons transcodes them to (1080p, or 480p on phones). Commons
+// allows reading them across origins, so the glass can sample them.
+const COMMONS = 'https://upload.wikimedia.org/wikipedia/commons/transcoded/';
+const ONLINE = {
+  clouds: {
+    file: 'f/f5/2020-04-03_timelapse-nuages-Belfort.webm/2020-04-03_timelapse-nuages-Belfort.webm',
+    author: 'Thomas Bresson', license: 'CC BY 4.0',
+    page: 'https://commons.wikimedia.org/wiki/File:2020-04-03_timelapse-nuages-Belfort.webm',
+  },
+  waterfall: {
+    file: 'a/a0/Athirapally_falls.webm/Athirapally_falls.webm',
+    author: 'Shyamal', license: 'CC0',
+    page: 'https://commons.wikimedia.org/wiki/File:Athirapally_falls.webm',
+  },
+  coast: {
+    file: 'e/eb/Northern_Shore_of_Madeira_near_Porto_Moniz.webm/Northern_Shore_of_Madeira_near_Porto_Moniz.webm',
+    author: 'Szabolcs Beki', license: 'CC BY 3.0',
+    page: 'https://commons.wikimedia.org/wiki/File:Northern_Shore_of_Madeira_near_Porto_Moniz.webm',
+  },
+  ocean: {
+    file: 'c/c6/Pacific_Ocean_at_Arena_Cove_-_April_2023_-_Sarah_Stierch.webm/Pacific_Ocean_at_Arena_Cove_-_April_2023_-_Sarah_Stierch.webm',
+    author: 'Sarah Stierch', license: 'CC BY 4.0',
+    page: 'https://commons.wikimedia.org/wiki/File:Pacific_Ocean_at_Arena_Cove_-_April_2023_-_Sarah_Stierch.webm',
+  },
+};
 
 const DEFAULTS = {
   theme: 'light',
   wallpaper: 'tahoe',
+  // The random photo's Picsum id, so a link opens the same one (0: any).
+  photo: 0,
   // How fast the wallpaper moves.
   speed: 1,
   // theme: dark ink on light glass under the light theme, light ink on
@@ -79,7 +112,7 @@ const DEFAULTS = {
 
 const LIMITS = {
   density: [0, 1], threshold: [0.2, 0.8], rim: [4, 96], edge: [0, 2.5], power: [1, 6], dispersion: [0, 0.4],
-  radius: [0, 60], smoothing: [0.5, 3], speed: [0, 3],
+  radius: [0, 60], smoothing: [0.5, 3], speed: [0, 3], photo: [0, 100000],
   opacity: [0, 1.5], thin: [0, 0.8], dense: [0, 0.95], blur: [0, 40], saturation: [0, 3], brightness: [0.4, 1.6],
   contrast: [0.4, 1.6], rimLight: [0, 2], bevel: [0, 2.5], shadow: [0, 3],
 };
@@ -204,6 +237,7 @@ function save() {
     for (const key of Object.keys(DEFAULTS)) {
       // A file of the visitor's own can't go in a link.
       if (key === 'wallpaper' && state.wallpaper === 'custom') continue;
+      if (key === 'photo' && state.wallpaper !== 'photo') continue;
       if (differs(state[key], base.state[key])) next.set(key, format(state[key]));
     }
     for (const kind of ['light', 'dark']) {
@@ -284,7 +318,6 @@ function tuning() {
 
 // ---------- The wallpaper ----------
 
-let custom = null; // an <img> or <video> of the visitor's own
 const posters = Object.fromEntries(Object.entries(videos).map(([kind, video]) => {
   const image = new Image();
   image.src = video.poster;
@@ -300,10 +333,201 @@ scene?.setDark(state.theme === 'dark', true);
 const scenesSupported = Boolean(scene);
 const isScene = () => Boolean(scene && SCENES[state.wallpaper]);
 
+// ---------- Loading and credit ----------
+
+// A note at the top of the stage while a wallpaper loads, or when one
+// fails. It waits a moment, so a quick load shows nothing.
+const notice = $('.notice');
+let noticeTimer = 0;
+function showNotice(text, { busy = true, hideAfter = 0, delay = 220 } = {}) {
+  clearTimeout(noticeTimer);
+  noticeTimer = setTimeout(() => {
+    $('span', notice).textContent = text;
+    notice.toggleAttribute('data-busy', busy);
+    notice.hidden = false;
+    if (hideAfter) noticeTimer = setTimeout(hideNotice, hideAfter);
+  }, delay);
+}
+function hideNotice() {
+  clearTimeout(noticeTimer);
+  notice.hidden = true;
+}
+
+// Who made the wallpaper and under what license, in the stage's corner.
+const credit = $('.credit');
+function showCredit(info) {
+  credit.hidden = !info;
+  if (!info) return;
+  credit.textContent = info.text;
+  if (info.href) credit.href = info.href;
+  else credit.removeAttribute('href');
+}
+
+// ---------- Videos, photos and files ----------
+
+// The wallpaper shown in an <img> or <video> of its own: a Commons video,
+// a photo, or the visitor's file or link. Only the one showing exists, so
+// an online video stops downloading once another wallpaper is chosen.
+let media = null; // { key, el, video, readable, credit }
+// The visitor's own file or link: { src, video, credit, remote }.
+let own = null;
+let previous = 'tahoe';
+const isMedia = (key = state.wallpaper) => Boolean(ONLINE[key]) || key === 'photo' || key === 'custom';
+const phone = () => matchMedia('(max-width: 720px), (pointer: coarse)').matches;
+
+const VIDEO_EXT = /\.(mp4|m4v|webm|mov|ogv|ogg)(\?|#|$)/i;
+
+function dropMedia() {
+  if (!media) return;
+  media.el.removeAttribute('src');
+  if (media.video) media.el.load();
+  media.el.remove();
+  media = null;
+}
+
+// Puts an image or video on the wall, with the loading note while it
+// loads. A remote file is asked for with CORS so the glass can read it;
+// if the host doesn't allow that, it is shown anyway, unread.
+function showMedia(key, { src, video, credit: info, remote, cors = remote, retried = false }) {
+  dropMedia();
+  const el = document.createElement(video ? 'video' : 'img');
+  el.className = 'is-media';
+  el.alt = '';
+  if (cors) el.crossOrigin = 'anonymous';
+  if (video) Object.assign(el, { muted: true, loop: true, playsInline: true, preload: 'auto' });
+  media = { key, el, video, readable: !remote || cors, credit: info };
+  const mine = media;
+  showNotice(t(video ? 'Loading video…' : 'Loading image…'));
+  const ready = () => {
+    if (media !== mine) return;
+    hideNotice();
+    sampleSoon();
+  };
+  el.addEventListener(video ? 'loadeddata' : 'load', ready, { once: true });
+  if (video) {
+    el.addEventListener('waiting', () => media === mine && showNotice(t('Loading video…'), { delay: 600 }));
+    el.addEventListener('playing', ready);
+  }
+  el.addEventListener('error', () => {
+    if (media !== mine) return;
+    if (cors) {
+      // A host can turn a request away for a moment (Commons answers 429
+      // when busy), so ask once more; then show it without CORS, which the
+      // glass can't read but still shows.
+      const again = { src, video, credit: info, remote, cors: !retried, retried: true };
+      setTimeout(() => media === mine && showMedia(key, again), retried ? 0 : 1200);
+      return;
+    }
+    const unplayable = video && el.error?.code === 4;
+    showNotice(t(unplayable ? "This browser can't play this video" : "Couldn't load this wallpaper"), { busy: false, hideAfter: 3200, delay: 0 });
+    dropMedia();
+    state.wallpaper = isMedia(previous) ? 'tahoe' : previous;
+    apply();
+    refreshPanel();
+  });
+  el.src = src;
+  wall.append(el);
+}
+
+// Picsum's photos (from Unsplash), with their authors: one page of the
+// list is fetched once and a photo drawn from it.
+let photoList = null;
+async function pickPhoto() {
+  if (!photoList) {
+    const page = 1 + Math.floor(Math.random() * 10);
+    photoList = fetch(`https://picsum.photos/v2/list?page=${page}&limit=100`).then((r) => r.json()).catch(() => []);
+  }
+  const list = await photoList;
+  return list.length ? list[Math.floor(Math.random() * list.length)] : { id: String(1 + Math.floor(Math.random() * 1000)) };
+}
+async function photoInfo(id) {
+  try {
+    return await fetch(`https://picsum.photos/id/${id}/info`).then((r) => r.json());
+  } catch {
+    return { id };
+  }
+}
+
+async function showPhoto(fresh) {
+  const token = (showPhoto.token = (showPhoto.token || 0) + 1);
+  showNotice(t('Loading image…'), { delay: 0 });
+  const photo = fresh || !state.photo ? await pickPhoto() : await photoInfo(state.photo);
+  if (token !== showPhoto.token || state.wallpaper !== 'photo') return;
+  state.photo = Number(photo.id) || 0;
+  const box = stage.getBoundingClientRect();
+  const scale = Math.min(2, devicePixelRatio || 1);
+  const w = Math.min(2560, Math.round(box.width * scale));
+  const h = Math.min(2560, Math.round(box.height * scale));
+  showMedia('photo', {
+    src: `https://picsum.photos/id/${photo.id}/${w}/${h}.webp`,
+    video: false,
+    remote: true,
+    credit: photo.author ? { text: `${t('Photo')}: ${photo.author} · Unsplash`, href: photo.url } : null,
+  });
+  save();
+}
+
+function useOwn(next) {
+  if (own?.src.startsWith('blob:') && own.src !== next.src) URL.revokeObjectURL(own.src);
+  own = next;
+  if (state.wallpaper === 'custom') dropMedia();
+  else previous = state.wallpaper;
+  state.wallpaper = 'custom';
+  apply();
+  refreshPanel();
+}
+
+function useFile(file) {
+  if (!file || !/^(image|video)\//.test(file.type)) {
+    showNotice(t('Use an image or a video'), { busy: false, hideAfter: 2400, delay: 0 });
+    return;
+  }
+  useOwn({ src: URL.createObjectURL(file), video: file.type.startsWith('video/'), credit: null, remote: false });
+}
+
+function useLink(raw) {
+  let url;
+  try {
+    url = new URL(raw.trim());
+  } catch {
+    showNotice(t('That is not a link'), { busy: false, hideAfter: 2400, delay: 0 });
+    return;
+  }
+  if (!/^https?:$/.test(url.protocol)) return;
+  useOwn({ src: url.href, video: VIDEO_EXT.test(url.pathname), credit: { text: url.hostname, href: url.href }, remote: true });
+}
+
+// The media the chosen wallpaper needs, made or dropped to match.
+function syncMedia() {
+  const key = state.wallpaper;
+  if (!isMedia(key)) {
+    dropMedia();
+    return;
+  }
+  if (media?.key === key && (key !== 'custom' || media.el.src === own?.src || media.el.currentSrc === own?.src)) return;
+  if (ONLINE[key]) {
+    const info = ONLINE[key];
+    const size = phone() ? 480 : 1080;
+    showMedia(key, {
+      src: `${COMMONS}${info.file}.${size}p.vp9.webm`,
+      video: true,
+      remote: true,
+      credit: { text: `${info.author} · ${info.license} · Wikimedia Commons`, href: info.page },
+    });
+  } else if (key === 'photo') {
+    if (media?.key !== 'photo') {
+      dropMedia();
+      showPhoto(false);
+    }
+  } else if (own) {
+    showMedia('custom', own);
+  }
+}
+
 // The player's clock: the playing video, or the scene's time over a minute.
 const SCENE_LOOP = 60;
 function clockSource() {
-  if (state.wallpaper === 'custom') return custom?.tagName === 'VIDEO' ? custom : null;
+  if (isMedia()) return media?.video ? media.el : null;
   if (isScene()) return { currentTime: scene.time % SCENE_LOOP, duration: SCENE_LOOP };
   return videos[state.theme];
 }
@@ -312,6 +536,7 @@ function clockSource() {
 // Tahoe is chosen; the theme's other video keeps playing while it fades
 // out (switchTheme stops it).
 function syncPlayback() {
+  syncMedia();
   const tahoe = state.wallpaper === 'tahoe';
   const rate = Math.max(0.0625, state.speed);
   for (const [kind, video] of Object.entries(videos)) {
@@ -319,16 +544,14 @@ function syncPlayback() {
     if (!tahoe || state.paused || state.speed === 0) video.pause();
     else if (kind === state.theme) {
       video.preload = 'auto';
+      if (video.readyState < 3) showNotice(t('Loading video…'), { delay: 400 });
       video.play().catch(() => {});
     }
   }
-  if (custom) {
-    custom.hidden = state.wallpaper !== 'custom';
-    if (custom.tagName === 'VIDEO') {
-      custom.playbackRate = rate;
-      if (state.wallpaper === 'custom' && !state.paused && state.speed > 0) custom.play().catch(() => {});
-      else custom.pause();
-    }
+  if (media?.video) {
+    media.el.playbackRate = rate;
+    if (!state.paused && state.speed > 0) media.el.play().catch(() => {});
+    else media.el.pause();
   }
   if (scene) {
     scene.setVisible(isScene());
@@ -337,7 +560,18 @@ function syncPlayback() {
     scene.setPlaying(!state.paused);
     scene.setDark(state.theme === 'dark');
   }
+  if (!isMedia() && state.wallpaper !== 'tahoe') hideNotice();
+  showCredit(
+    state.wallpaper === 'tahoe' ? { text: t('macOS Tahoe wallpaper © Apple Inc.') }
+      : isMedia() ? media?.credit ?? null
+        : null,
+  );
   stage.toggleAttribute('data-paused', state.paused);
+}
+
+for (const video of Object.values(videos)) {
+  video.addEventListener('playing', () => state.wallpaper === 'tahoe' && hideNotice());
+  video.addEventListener('waiting', () => state.wallpaper === 'tahoe' && !state.paused && showNotice(t('Loading video…'), { delay: 600 }));
 }
 
 // The incoming theme's video picks up where the other left off, and the
@@ -366,30 +600,47 @@ document.body.append(upload);
 upload.addEventListener('change', () => {
   const file = upload.files?.[0];
   upload.value = '';
-  if (!file) return;
-  const url = URL.createObjectURL(file);
-  const isVideo = file.type.startsWith('video/');
-  const el = document.createElement(isVideo ? 'video' : 'img');
-  el.className = 'is-custom';
-  if (isVideo) Object.assign(el, { muted: true, loop: true, playsInline: true });
-  el.addEventListener(isVideo ? 'loadeddata' : 'load', sampleSoon, { once: true });
-  el.src = url;
-  if (custom) {
-    URL.revokeObjectURL(custom.src);
-    custom.remove();
+  if (file) useFile(file);
+});
+
+// A file dropped anywhere on the page, or pasted, becomes the wallpaper;
+// so does a pasted link.
+let dragDepth = 0;
+const hasFiles = (event) => [...(event.dataTransfer?.types || [])].includes('Files');
+addEventListener('dragenter', (event) => {
+  if (!hasFiles(event)) return;
+  dragDepth += 1;
+  showNotice(t('Drop an image or video to use it'), { busy: false, delay: 0 });
+});
+addEventListener('dragover', (event) => hasFiles(event) && event.preventDefault());
+addEventListener('dragleave', (event) => {
+  if (hasFiles(event) && --dragDepth <= 0) {
+    dragDepth = 0;
+    hideNotice();
   }
-  custom = el;
-  wall.append(el);
-  state.wallpaper = 'custom';
-  apply();
-  refreshPanel();
+});
+addEventListener('drop', (event) => {
+  if (!hasFiles(event)) return;
+  event.preventDefault();
+  dragDepth = 0;
+  hideNotice();
+  useFile(event.dataTransfer.files[0]);
+});
+addEventListener('paste', (event) => {
+  if (event.target.closest?.('input, textarea, [contenteditable]')) return;
+  const file = event.clipboardData?.files?.[0];
+  const text = event.clipboardData?.getData('text/plain')?.trim();
+  if (file) useFile(file);
+  else if (/^https?:\/\/\S+$/.test(text || '')) useLink(text);
 });
 
 // Choosing "Your own" before giving a file asks for one.
 function showWallpaper() {
-  if (state.wallpaper === 'custom' && !custom) {
-    state.wallpaper = 'tahoe';
+  if (state.wallpaper === 'custom' && !own) {
+    state.wallpaper = previous;
     upload.click();
+  } else if (state.wallpaper !== 'custom') {
+    previous = state.wallpaper;
   }
   apply();
   refreshPanel();
@@ -401,7 +652,7 @@ const read = sampler();
 const readout = { luminance: '–', ink: '–', density: '–', floor: '–', tint: '–' };
 
 function wallpaperSource() {
-  if (state.wallpaper === 'custom' && custom) return custom;
+  if (isMedia()) return media?.readable ? media.el : null;
   if (isScene()) return sceneCanvas;
   const video = videos[state.theme];
   return video.readyState >= 2 ? video : posters[state.theme];
@@ -427,6 +678,9 @@ function decide(el, stageBox) {
   let keep = 1;
   let floor = 0;
   if (patch && state.autoDensity) ({ density, saturate: keep } = adapt(patch, ink));
+  // A wallpaper the glass can't read (another site's, without CORS) takes
+  // a dense tint, so its text reads whatever is behind it.
+  else if (!patch && state.autoDensity && isMedia() && media && !media.readable) density = 0.85;
   if (patch && state.legible) floor = tintFloor(patch.luminance, patch.texture, ink, luma(hexRgb(m.tint)));
   setVar(el, '--density', density);
   setVar(el, '--keep', keep);
@@ -450,7 +704,8 @@ let sampleFrame = 0;
 function sampleNow() {
   sampleFrame = 0;
   const stageBox = stage.getBoundingClientRect();
-  read.capture(wallpaperSource(), stageBox.width, stageBox.height);
+  const source = wallpaperSource();
+  if (!source || !read.capture(source, stageBox.width, stageBox.height)) read.clear();
   for (const el of glasses) decide(el, stageBox);
 }
 
@@ -491,7 +746,7 @@ requestAnimationFrame(tick);
 
 function seek(by) {
   if (isScene()) scene.time += by;
-  const all = [...Object.values(videos), custom].filter((v) => v?.tagName === 'VIDEO' && v.duration);
+  const all = [...Object.values(videos), media?.video && media.el].filter((v) => v?.duration);
   for (const v of all) v.currentTime = (v.currentTime + by + v.duration) % v.duration;
   sampleSoon();
 }
@@ -570,6 +825,9 @@ const actions = {
   wallpaper: () => {
     const keys = Object.values(WALLPAPERS).filter((key) => key !== 'custom' && (scenesSupported || !SCENES[key]));
     state.wallpaper = keys[(keys.indexOf(state.wallpaper) + 1) % keys.length];
+    previous = state.wallpaper;
+    // Each visit to the random photo draws a new one.
+    if (state.wallpaper === 'photo') state.photo = 0;
     apply();
     refreshPanel();
   },
@@ -580,6 +838,7 @@ function labelToolbar() {
   for (const el of $$('[data-tip-key]', toolbar)) {
     let key = el.dataset.tipKey;
     if (key === 'Pause wallpaper' && state.paused) key = 'Play wallpaper';
+    if (key === 'Refraction') key = state.lens ? 'Refraction: on' : 'Refraction: off';
     const text = el.dataset.key ? `${t(key)}  ${el.dataset.key === 'Space' ? t('Space') : el.dataset.key}` : t(key);
     el.dataset.tip = text;
     el.setAttribute('aria-label', t(key));
@@ -785,7 +1044,19 @@ async function buildPane() {
     label: 'Wallpaper',
     options: Object.fromEntries(Object.entries(WALLPAPERS).filter(([, key]) => scenesSupported || !SCENES[key])),
   }).on('change', showWallpaper);
-  sceneFolder.addButton({ title: 'Upload wallpaper…' }).on('click', () => upload.click());
+  sceneFolder.addButton({ title: 'Another photo' }).on('click', () => {
+    state.wallpaper = 'photo';
+    previous = 'photo';
+    if (media?.key === 'photo') showPhoto(true);
+    else state.photo = 0;
+    apply();
+    refreshPanel();
+  });
+  sceneFolder.addButton({ title: 'Upload image or video…' }).on('click', () => upload.click());
+  const link = { url: '' };
+  sceneFolder.addBinding(link, 'url', { label: 'Link' }).on('change', ({ value }) => {
+    if (value.trim()) useLink(value);
+  });
   sceneFolder.addBinding(state, 'speed', { label: 'Speed', min: 0, max: 3, step: 0.05 });
   sceneFolder.addBinding(state, 'paused', { label: 'Paused' });
 
@@ -876,9 +1147,7 @@ async function buildPane() {
     cells: (x) => [{ title: 'EN', value: 'en' }, { title: '中文', value: 'zh' }][x],
   }).on('change', () => {
     translate(document.body);
-    labelToolbar();
-    sampleNow();
-    save();
+    apply();
   });
 
   densityBinding.disabled = state.autoDensity;

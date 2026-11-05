@@ -32,10 +32,13 @@ export async function createPane(options) {
   try {
     const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), WAIT));
     const [{ Pane }, Essentials] = await Promise.race([Promise.all([import(TWEAKPANE), import(ESSENTIALS)]), timeout]);
+    options.container?.querySelector('.sidebar-loading')?.remove();
     const pane = new Pane(options);
     pane.registerPlugin(Essentials);
     return pane;
   } catch {
+    const note = options.container?.querySelector('.sidebar-loading');
+    if (note) note.textContent = 'The settings could not be loaded.';
     console.warn('Glasswork: the settings panel could not be loaded; the glass works without it.');
     return standIn();
   }

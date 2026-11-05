@@ -4,6 +4,20 @@ All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **More backgrounds.** Four openly licensed videos streamed from Wikimedia Commons (Clouds, Waterfall, Coast, Ocean), a random photo from Lorem Picsum (Unsplash) with **Another photo**, and pasted links to an image or video; the author and license show in the stage's corner.
+- **Your own file, more ways.** Upload an image or video, drop it on the page or paste it.
+- **Loading note.** A note at the top of the stage while a wallpaper loads, and when one can't be loaded or played.
+
+### Changed
+
+- The settings float over the wallpaper at the top right instead of being docked beside it.
+- The refraction button shows when it is off: its icon is struck through and dimmed, and its tip says on or off.
+- A wallpaper the glass can't read (another site's, without CORS) takes the theme's ink and a dense tint.
+
 ## [1.0.0] - 2026-11-05
 
 ### Added

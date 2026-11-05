@@ -18,7 +18,8 @@ Lumno 新标签页上那层液态玻璃，我把它单独拿出来，做成了�
 - 浅色玻璃、深色玻璃各一套参数：着色颜色和浓淡、模糊、饱和度、亮度、对比度、边缘光、内侧柔光、阴影。
 - 边缘折射的边宽、偏移、衰减和色散都能调。圆角也能调平滑度，折射会跟着圆角走。
 - 玻璃会看身后的壁纸：背景越花，着色越浓，文字始终保持 4.5:1 的对比度。
-- 背景除了 macOS Tahoe 的动态壁纸，还有 6 张我用 WebGL 画的动态壁纸，深浅模式各一版。也可以换成你自己的图片或视频，文件只在你的浏览器里打开，不会上传。
+- 背景有很多选择：macOS Tahoe 的动态壁纸；6 张我用 WebGL 画的动态壁纸，深浅模式各一版；4 段 Wikimedia Commons 上开放授权的实拍视频（云、瀑布、海岸、海浪）；或者随机来一张 Unsplash 的照片。
+- 也可以用你自己的图片或视频：点上传、直接拖进页面、粘贴文件，或者贴一个图片 / 视频链接都行。本地文件只在你的浏览器里打开，不会上传。背景加载时顶部会有提示。
 - 搜索框、播放器、染色滑条可以拖着在壁纸上走，双击回到原位。
 - 预设有 Lumno、全透、磨砂、厚玻璃、鲜艳几种，只改材质和折射，你调过的颜色、主题这些不会被冲掉。
 - 所有设置都记在网址里，把链接发给别人，打开就是同一块玻璃。
@@ -155,7 +156,8 @@ Hover brightens the tint by about 14% instead of lifting a shadow.
 | --- | --- | --- |
 | `preset` | `lumno`、`clear-glass`、`frosted`、`thick-slab`、`vivid` | 预设 |
 | `theme` | `light`（默认）、`dark` | 主题 |
-| `wallpaper` | `tahoe`（默认）、`mesh`、`dunes`、`aurora`、`lava`、`lines`、`bokeh` | 壁纸 |
+| `wallpaper` | `tahoe`（默认）、`mesh`、`dunes`、`aurora`、`lava`、`lines`、`bokeh`、`clouds`、`waterfall`、`coast`、`ocean`、`photo` | 壁纸 |
+| `photo` | Picsum 的照片 id | 随机照片固定成哪一张 |
 | `speed`、`paused` | `0`–`3`；`0` / `1` | 壁纸速度、暂停 |
 | `ink` | `theme`（默认）、`auto`、`dark`、`light` | 文字墨色，`auto` 是按壁纸自动切换 |
 | `autoDensity`、`density` | `0` / `1`；`0`–`1` | 着色浓度自动或手动 |
@@ -183,7 +185,9 @@ python3 -m http.server 8000
 
 ## 浏览器
 
-Chrome、Edge、Arc 这类 Chromium 内核的浏览器效果最完整。Safari 和 Firefox 画不出边缘折射，会退回纯 CSS 的玻璃，着色、模糊、边缘光都还在。圆角平滑度需要 Chromium 139 以上。
+Chrome、Edge、Arc 这类 Chromium 内核的浏览器效果最完整。Safari 和 Firefox 画不出边缘折射，会退回纯 CSS 的玻璃，着色、模糊、边缘光都还在。圆角平滑度需要 Chromium 139 以上。Commons 的视频是 WebM 格式，旧版 Safari 可能播不了，会提示并切回 Tahoe。
+
+如果贴的链接所在的网站不允许跨域读取，背景照样能显示，只是玻璃读不到它，会改用跟随主题的墨色和偏浓的着色。
 
 想改点什么或者发现问题，欢迎开 Issue 或 PR，规范写在 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
@@ -192,4 +196,6 @@ Chrome、Edge、Arc 这类 Chromium 内核的浏览器效果最完整。Safari �
 - 代码以 [MIT](LICENSE) 开源，`media/` 里由这个项目渲染出来的图片也一样。
 - **Tahoe 的动态壁纸不在 MIT 范围内。** `media/` 里的 `tahoe-light.mp4`、`tahoe-dark.mp4`、`tahoe-light.webp`、`tahoe-dark.webp` 截自 macOS Tahoe 的动态壁纸，版权属于 Apple Inc.。放在这里只是为了在线演示能看到玻璃在原本那张壁纸上的样子，请不要拿去用，基于这份代码做东西时也请删掉它们。如果权利人要求，我会马上移除。详见 [NOTICE](NOTICE)。
 - 这是个人项目，和 Apple 没有任何关系。Apple、macOS、macOS Tahoe、Liquid Glass 是 Apple Inc. 的商标，这里说的液态玻璃指的是 Lumno 自己的材质。
+- 4 段实拍视频来自 Wikimedia Commons，直接从 Commons 播放，没有放进仓库：[云](https://commons.wikimedia.org/wiki/File:2020-04-03_timelapse-nuages-Belfort.webm)（Thomas Bresson，CC BY 4.0）、[瀑布](https://commons.wikimedia.org/wiki/File:Athirapally_falls.webm)（Shyamal，CC0）、[海岸](https://commons.wikimedia.org/wiki/File:Northern_Shore_of_Madeira_near_Porto_Moniz.webm)（Szabolcs Beki，CC BY 3.0）、[海浪](https://commons.wikimedia.org/wiki/File:Pacific_Ocean_at_Arena_Cove_-_April_2023_-_Sarah_Stierch.webm)（Sarah Stierch，CC BY 4.0）。播放时左下角会显示作者和协议。
+- 随机照片来自 [Lorem Picsum](https://picsum.photos)，原图出自 Unsplash，遵循 Unsplash License，左下角会显示摄影师。
 - 面板用的是 [Tweakpane](https://tweakpane.github.io/docs/)，MIT 许可，从 jsDelivr 加载。

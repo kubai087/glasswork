@@ -29,8 +29,15 @@ const XS = [0.18, 0.34, 0.5, 0.66, 0.82];
 const YS = [0.24, 0.5, 0.76];
 
 export function sampler() {
-  const canvas = document.createElement('canvas');
-  const context = canvas.getContext('2d', { willReadFrequently: true });
+  let canvas;
+  let context;
+  // A canvas that once drew an unreadable (cross-origin) image stays
+  // unreadable, so it is replaced.
+  const fresh = () => {
+    canvas = document.createElement('canvas');
+    context = canvas.getContext('2d', { willReadFrequently: true });
+  };
+  fresh();
   let pixels = null;
   let width = 1;
   let height = 1;
@@ -60,9 +67,14 @@ export function sampler() {
       } catch {
         // A cross-origin wallpaper can't be read.
         pixels = null;
+        fresh();
         return false;
       }
       return true;
+    },
+    // Forgets the last wallpaper read, when there is none to read.
+    clear() {
+      pixels = null;
     },
     get ready() {
       return pixels !== null;

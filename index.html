@@ -25,6 +25,10 @@
         <video class="is-dark" src="./media/tahoe-dark.mp4" poster="./media/tahoe-dark.webp" muted playsinline loop preload="none"></video>
       </div>
 
+      <!-- Shown while a wallpaper loads, and who made the wallpaper. -->
+      <div class="notice" role="status" aria-live="polite" hidden><i aria-hidden="true"></i><span></span></div>
+      <a class="credit" target="_blank" rel="noopener" hidden></a>
+
       <!-- The glass. Drag any surface over the wallpaper. -->
       <div class="surfaces">
         <div class="search glass" data-surface="search">
@@ -78,7 +82,7 @@
         </button>
         <i class="sep" aria-hidden="true"></i>
         <button type="button" data-action="lens" data-tip-key="Refraction" aria-pressed="true">
-          <svg class="ink" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M8.2 9.4a4.6 4.6 0 0 1 3.2-2.6"/></svg>
+          <svg class="ink" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M8.2 9.4a4.6 4.6 0 0 1 3.2-2.6"/><path class="off" d="M4.5 4.5l15 15"/></svg>
         </button>
         <button type="button" data-action="code" data-tip-key="Copy CSS">
           <svg class="ink" viewBox="0 0 24 24"><path d="m8.5 7.5-5 4.5 5 4.5M15.5 7.5l5 4.5-5 4.5"/></svg>
@@ -95,7 +99,7 @@
   </main>
 
   <!-- Settings (Tweakpane). H hides it, T switches the theme, W the wallpaper, Space pauses it. -->
-  <aside class="sidebar"></aside>
+  <aside class="sidebar"><p class="sidebar-loading">Loading settings…</p></aside>
 
   <!-- The material as CSS, for your own components. -->
   <dialog class="code-dialog">

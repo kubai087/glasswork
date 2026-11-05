@@ -21,5 +21,15 @@ Glasswork is an independent project and is not affiliated with, endorsed by
 or sponsored by Apple Inc. Apple, macOS, macOS Tahoe and Liquid Glass are
 trademarks of Apple Inc.
 
-Tweakpane and @tweakpane/plugin-essentials (MIT License) are loaded at run
-time from jsDelivr and are not part of this repository.
+Loaded at run time and not part of this repository:
+
+- Tweakpane and @tweakpane/plugin-essentials (MIT License), from jsDelivr.
+- Four videos streamed from Wikimedia Commons, each under its own license
+  and credited on the page while it plays:
+    2020-04-03 timelapse-nuages-Belfort.webm, Thomas Bresson, CC BY 4.0
+    Athirapally falls.webm, Shyamal, CC0
+    Northern Shore of Madeira near Porto Moniz.webm, Szabolcs Beki, CC BY 3.0
+    Pacific Ocean at Arena Cove - April 2023 - Sarah Stierch.webm,
+      Sarah Stierch, CC BY 4.0
+- Random photos from Lorem Picsum (picsum.photos), originally from Unsplash
+  under the Unsplash License, with the photographer credited on the page.
